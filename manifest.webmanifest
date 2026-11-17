@@ -1,0 +1,17 @@
+{
+  "name": "رادار صفار — الأخبار",
+  "short_name": "رادار صفار",
+  "description": "أخبار البورصة المصرية والاقتصاد والعالم مع تحليل وإشعارات فورية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B0E14",
+  "theme_color": "#0B0E14",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
