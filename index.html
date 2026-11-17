@@ -44,6 +44,15 @@ main{padding:12px 12px 0;max-width:720px;margin:0 auto}
 input.code{width:100%;font-size:26px;letter-spacing:10px;text-align:center;background:var(--bg);border:1px solid var(--ln);border-radius:12px;color:var(--tx);padding:10px;direction:ltr;margin-top:8px}
 .err{color:var(--dn);font-weight:700;margin-top:8px}.ok{color:var(--up);font-weight:700}
 .foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.tabs{grid-template-columns:repeat(4,1fr)}.tabs button{font-size:12.5px;padding:7px 2px}
+.top1{background:linear-gradient(135deg,#1d1840,#171D2B);border:1px solid #8B7CFF66;border-radius:14px;padding:11px 12px;margin-bottom:10px}.top1 .t{font-size:16.5px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--p);border:1px solid var(--ln);border-radius:12px;padding:3px;margin-bottom:10px}.seg button{background:none;border:0;border-radius:9px;padding:6px 2px;font-size:13px;font-weight:700}.seg button.on{background:var(--gold);color:#14100A}
+.sel{display:flex;gap:6px;margin-bottom:10px}.sel select{flex:1;min-width:0;background:var(--p2);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:6px;font:inherit;font-size:13px}
+.ev .h b{font-size:15px;direction:ltr}.ev .ty{font-size:12.5px;color:var(--mut)}.ev .sum{margin:6px 0 2px;font-weight:600}.ev .why{color:var(--mut);font-size:13.5px}
+.nums{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;margin-top:6px}.nums span{background:#ffffff0a;border-radius:8px;padding:1px 8px}
+.lnk{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:13px}.lnk a{color:#9fb4ff}
+.day{display:grid;grid-template-columns:78px 1fr;gap:8px;border-top:1px solid var(--ln);padding:8px 0}.day.soon .dd b{color:var(--gold)}.row{padding:2px 0;font-size:14px}.row.mine b{color:var(--gold)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th,.tbl td{padding:6px 4px;border-bottom:1px solid var(--ln);text-align:start}.tbl th{color:var(--mut);font-weight:600}.tbl tr.past{opacity:.5}.tbl tr.mine td:first-child{color:var(--gold);font-weight:800}
 .mood{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.mood div{flex:0 0 auto;background:var(--p2);border:1px solid var(--ln);border-radius:10px;padding:5px 10px;font-size:12.5px;white-space:nowrap}
 </style>
 </head>
@@ -106,7 +115,7 @@ async function pair() {
 }
 
 // ---------- news ----------
-const CAT = [['stocks', '📈 الأسهم'], ['egypt', '🇪🇬 الاقتصاد المصري'], ['world', '🌍 العالم']];
+const CAT = [['stocks', '📈 الأسهم'], ['egypt', '🇪🇬 الاقتصاد'], ['world', '🌍 العالم'], ['disc', '📄 الإفصاحات']];
 function dedupe(L) {
   const key = x => (x.tk || []).length ? x.tk.slice().sort().join(',') + '|' + String(x.at).slice(0, 10) : String(x.t).replace(/[^\p{L}\p{N} ]/gu, '').split(/\s+/).slice(0, 5).join(' ');
   const by = new Map();
@@ -126,21 +135,101 @@ function mood() {
   const G = Object.fromEntries(((N && N.global) || []).map(q => [q.sym, q])), t = (l, s, inv) => { const q = G[s]; if (!q || q.c == null) return ''; const g = inv ? -q.c : q.c; return `<div>${l} <b class="${g > 0 ? 'up' : g < 0 ? 'dn' : ''}">${q.c > 0 ? '+' : ''}${(+q.c).toFixed(2)}%</b></div>`; };
   return `<div class="mood">${t('الدولار/الجنيه', 'EGP=X', true)}${t('برنت', 'BZ=F')}${t('الذهب', 'GC=F')}${t('S&P', '^GSPC')}${t('الأسواق الناشئة', 'EEM')}${t('السعودية', '^TASI.SR')}</div>`;
 }
+
+// ---------- disclosures from the exchange: feed · calendar · dividends · AGMs ----------
+let E = null, Eat = 0;
+const DIRC = {'إيجابي': 'up', 'سلبي': 'dn', 'مختلط': 'gold', 'محايد': 'gold'};
+const AR_WD = ['الأحد', 'الاتنين', 'التلات', 'الأربع', 'الخميس', 'الجمعة', 'السبت'];
+const dayStr = (d = new Date()) => new Intl.DateTimeFormat('en-CA', {timeZone: 'Africa/Cairo'}).format(d);
+const dShow = iso => { if (!iso) return '—'; const d = new Date(iso + 'T12:00:00Z'); return `${AR_WD[d.getUTCDay()]} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`; };
+const daysTo = iso => iso ? Math.round((Date.parse(iso + 'T12:00:00Z') - Date.parse(dayStr() + 'T12:00:00Z')) / 864e5) : null;
+const inDays = n => n == null ? '' : n === 0 ? 'النهارده' : n === 1 ? 'بكرة' : n === -1 ? 'امبارح' : n > 0 ? `بعد ${n} يوم` : `من ${-n} يوم`;
+const n2 = (x, d = 2) => x == null || !isFinite(x) ? '—' : Number(x).toFixed(d);
+const big = v => { v = Math.abs(+v); return v >= 1e9 ? n2(v / 1e9, 2) + ' مليار' : v >= 1e6 ? n2(v / 1e6, 1) + ' مليون' : n2(v, 0); };
+const EVG = {div: ['cash_dividend', 'stock_dividend', 'split', 'reverse_split', 'rights_issue', 'capital_reduction', 'capital_increase', 'tender'], res: ['results'], ga: ['ga_invite', 'ga_decisions', 'board_decisions', 'board_invite'], own: ['treasury_buy', 'treasury_sell', 'major_holder', 'governance'], ops: ['deal', 'operations', 'legal', 'delisting', 'other'], halt: ['halt'], list: ['listing']};
+const EVGL = [['main', 'كل المهم'], ['div', 'توزيعات ورأس مال'], ['res', 'نتائج أعمال'], ['ga', 'جمعيات ومجالس'], ['own', 'خزينة ومساهمين'], ['ops', 'صفقات وتشغيل'], ['halt', 'إيقافات'], ['all', 'الكل']];
+const inGrp = (e, g) => g === 'all' ? true : g === 'main' ? !['halt', 'listing', 'governance'].includes(e.type) : (EVG[g] || []).includes(e.type);
+const evd = {sub: 'feed', scope: 'all', grp: 'main', dir: '', n: 40};
+const heldE = () => new Set((E && E.held) || []);
+const yieldOf = e => { const p = E && E.px && E.px[e.t]; return e.amount != null && p ? +e.amount / p * 100 : null; };
+async function loadEv(force) {
+  if (!force && E && Date.now() - Eat < 300000) return;
+  try { E = await call('ev', {token: ls.get('rn_tok')}); Eat = Date.now(); if (ui.cat === 'disc') render(); } catch (e) {}
+}
+function evNums(e) {
+  const o = [];
+  if (e.amount != null) o.push(`الكوبون <b>${n2(+e.amount, +e.amount < 1 ? 3 : 2)}</b> ج${yieldOf(e) != null ? ` (عائد ${n2(yieldOf(e), 1)}%)` : ''}`);
+  if (e.np != null) o.push(`صافي ${+e.np >= 0 ? 'الربح' : 'الخسارة'} ${big(e.np)}${e.np_chg != null ? ` <b class="${+e.np_chg >= 0 ? 'up' : 'dn'}">${+e.np_chg > 0 ? '+' : ''}${n2(+e.np_chg, 1)}%</b>` : ''}`);
+  [['cum', 'آخر يوم بالحق'], ['ex', 'عدم الحق'], ['pay', 'الصرف'], ['ev', e.type === 'ga_invite' ? 'الجمعية' : e.type === 'board_invite' ? 'الاجتماع' : 'التاريخ'], ['sub_end', 'نهاية الاكتتاب']].forEach(([k, l]) => { if (e[k]) o.push(`${l} ${dShow(e[k])}`); });
+  return o;
+}
+function evCard(e, H) {
+  const d = DIRC[e.dir] || 'gold', att = e.att || [], kp = (e.x && e.x.key_points) || [];
+  return `<article class="card ev${H.has(e.t) ? ' mine' : ''}"><div class="h"><span><b>${esc(e.t || '')}</b> <span class="ty">${esc(e.type_ar || '')}${H.has(e.t) ? ' · <span style="color:var(--gold)">في محفظتك</span>' : ''}</span></span><span class="d ${d}">${esc(e.dir || 'غير محسوم')}</span></div>
+   <div class="sum">${esc(e.sum || e.title || '')}</div>${e.why ? `<div class="why">ليه: ${esc(e.why)}</div>` : ''}
+   ${evNums(e).length ? `<div class="nums">${evNums(e).map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+   ${kp.length ? `<ul style="margin:6px 0;padding-inline-start:18px;font-size:13.5px">${kp.slice(0, 4).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+   <div class="lnk"><span class="k">${e.at ? dShow(dayStr(new Date(e.at))) + ' · ' + new Date(e.at).toLocaleTimeString('ar-EG-u-nu-latn', {timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit'}) : ''}</span>${att.map((a, i) => /^https?:/.test(a.url || '') ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">📎 المرفق${att.length > 1 ? ' ' + (i + 1) : ''}</a>` : '').join('')}${/^https?:/.test(e.url || '') ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">الإفصاح ↗</a>` : ''}</div></article>`;
+}
+function evDates(L) {
+  const out = [], T = dayStr();
+  const lab = {cum: e => e.type === 'rights_issue' ? 'آخر يوم بحق الاكتتاب' : 'آخر يوم شراء بالحق', ex: () => 'عدم الحق (السعر بيتسوّى)', pay: e => e.type === 'cash_dividend' ? 'صرف الكوبون' : 'توزيع الأسهم', ev: e => e.type === 'ga_invite' ? 'جمعية ' + ((e.x && e.x.ga_kind) || 'عامة') : e.type === 'board_invite' ? 'اجتماع مجلس' : e.type_ar, sub_end: () => 'آخر يوم اكتتاب'};
+  L.forEach(e => Object.keys(lab).forEach(k => { if (e[k] && e[k] >= T) out.push({d: e[k], k, l: lab[k](e), e}); }));
+  return out.sort((a, b) => a.d.localeCompare(b.d));
+}
+function discView() {
+  loadEv();
+  const segs = [['feed', 'الإفصاحات'], ['cal', 'التقويم'], ['div', 'التوزيعات'], ['ga', 'الجمعيات']];
+  let h = `<div class="seg">${segs.map(([k, l]) => `<button data-evs="${k}" class="${evd.sub === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  if (!E) return h + '<div class="empty">جاري تحميل إفصاحات البورصة…</div>';
+  const H = heldE(), T = dayStr();
+  if (evd.sub === 'feed') {
+    const sel = (k, o) => `<select data-evf="${k}">${o.map(([v, l]) => `<option value="${esc(v)}" ${evd[k] === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    let L = (E.recent || []).filter(e => inGrp(e, evd.grp) && (!evd.dir || e.dir === evd.dir) && (evd.scope === 'all' || H.has(e.t)));
+    L.sort((a, b) => (evd.scope === 'all' ? (H.has(b.t) && daysTo(dayStr(new Date(b.at))) >= -2) - (H.has(a.t) && daysTo(dayStr(new Date(a.at))) >= -2) : 0) || String(b.at).localeCompare(String(a.at)));
+    return h + `<div class="sel">${sel('scope', [['all', 'كل السوق'], ['held', 'أسهمي بس']])}${sel('grp', EVGL)}${sel('dir', [['', 'كل الأثر'], ['إيجابي', 'إيجابي'], ['سلبي', 'سلبي'], ['مختلط', 'مختلط'], ['محايد', 'محايد']])}</div>`
+      + `<div class="k" style="margin-bottom:8px">${L.length} إفصاح آخر 30 يوم · أسهمك فوق</div>` + (L.slice(0, evd.n).map(e => evCard(e, H)).join('') || '<div class="empty">مفيش إفصاحات بالفلاتر دي.</div>')
+      + (L.length > evd.n ? `<button class="btn g" data-evmore>اعرض أكتر (${L.length - evd.n})</button>` : '');
+  }
+  if (evd.sub === 'cal') {
+    const by = {}; evDates(E.upcoming || []).filter(x => daysTo(x.d) <= 45).forEach(x => (by[x.d] = by[x.d] || []).push(x));
+    const days = Object.keys(by).sort();
+    return h + `<div class="card">${days.map(d => `<div class="day${daysTo(d) <= 1 ? ' soon' : ''}"><div class="dd"><b>${dShow(d)}</b><div class="k">${inDays(daysTo(d))}</div></div><div>${by[d].sort((a, b) => H.has(b.e.t) - H.has(a.e.t)).map(x => `<div class="row${H.has(x.e.t) ? ' mine' : ''}"><b>${esc(x.e.t || '')}</b> ${esc(x.l)}${x.e.amount != null && x.k === 'cum' ? ` · كوبون ${n2(+x.e.amount, 2)} ج${yieldOf(x.e) != null ? ` <span class="up">${n2(yieldOf(x.e), 1)}%</span>` : ''}` : ''}</div>`).join('')}</div></div>`).join('') || '<div class="empty">مفيش مواعيد جاية متسجلة.</div>'}
+      <div class="k" style="margin-top:8px">آخر يوم بالحق = آخر جلسة تشتري فيها وتاخد التوزيع. يوم عدم الحق السعر بيتسوّى بقيمة التوزيع، وده مش هبوط حقيقي.</div></div>`;
+  }
+  if (evd.sub === 'div') {
+    const seen = new Set(), L = [...(E.upcoming || []), ...(E.recent || [])].filter(e => ['cash_dividend', 'stock_dividend', 'rights_issue', 'split', 'reverse_split'].includes(e.type) && (e.cum || e.ex || e.pay) && !seen.has(e.k) && seen.add(e.k))
+      .sort((a, b) => ((a.cum || a.ex || '') < T) - ((b.cum || b.ex || '') < T) || (a.cum || a.ex || '').localeCompare(b.cum || b.ex || ''));
+    return h + `<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>السهم</th><th>النوع</th><th>القيمة</th><th>العائد</th><th>آخر يوم بالحق</th><th>الصرف</th></tr></thead><tbody>
+      ${L.map(e => { const y = yieldOf(e), n = daysTo(e.cum || e.ex); return `<tr class="${n != null && n < 0 ? 'past' : ''}${H.has(e.t) ? ' mine' : ''}"><td>${esc(e.t || '')}</td><td>${esc(e.type_ar || '')}</td><td>${e.amount != null ? n2(+e.amount, +e.amount < 1 ? 3 : 2) + ' ج' : esc((e.x && e.x.ratio_text) || '—')}</td><td>${y != null ? `<span class="up">${n2(y, 1)}%</span>` : '—'}</td><td>${dShow(e.cum)}<div class="k">${inDays(n)}</div></td><td>${dShow(e.pay)}</td></tr>`; }).join('') || '<tr><td colspan="6" class="empty">مفيش توزيعات.</td></tr>'}</tbody></table></div>`;
+  }
+  const seen = new Set(), inv = [...(E.upcoming || []), ...(E.recent || [])].filter(e => ['ga_invite', 'board_invite'].includes(e.type) && !seen.has(e.k) && seen.add(e.k)).sort((a, b) => ((a.ev || '') < T) - ((b.ev || '') < T) || (a.ev || '').localeCompare(b.ev || ''));
+  const dec = (E.recent || []).filter(e => ['ga_decisions', 'board_decisions'].includes(e.type)).slice(0, 30);
+  return h + `<div class="card" style="overflow-x:auto"><b>مواعيد الجمعيات والمجالس (${inv.length})</b><table class="tbl"><thead><tr><th>السهم</th><th>النوع</th><th>الميعاد</th><th>باقي</th></tr></thead><tbody>
+    ${inv.map(e => { const n = daysTo(e.ev); return `<tr class="${n != null && n < 0 ? 'past' : ''}${H.has(e.t) ? ' mine' : ''}"><td>${esc(e.t || '')}</td><td>${e.type === 'board_invite' ? 'مجلس إدارة' : 'جمعية ' + esc((e.x && e.x.ga_kind) || '')}</td><td>${dShow(e.ev)}${e.ev_time ? ' ' + esc(e.ev_time) : ''}</td><td>${inDays(n)}</td></tr>`; }).join('')}</tbody></table></div>
+    <div class="k" style="margin:4px 0 8px">قرارات الجمعيات والمجالس — آخر 30 يوم</div>${dec.map(e => evCard(e, H)).join('') || '<div class="empty">مفيش.</div>'}`;
+}
+document.addEventListener('change', e => { const s = e.target.closest('[data-evf]'); if (s) { evd[s.dataset.evf] = s.value; evd.n = 40; render(); } });
 function render() {
   if (!N) return;
   const I = N.items || [], fresh = c => I.filter(x => x.cat === c && ui.prev && String(x.sn) > String(ui.prev)).length;
   $('#tabs').hidden = false;
-  $('#tabs').innerHTML = CAT.map(([k, l]) => `<button data-cat="${k}" class="${ui.cat === k ? 'on' : ''}">${l}<span class="c">${(N.counts || {})[k] || 0} مهم آخر 24 س</span>${fresh(k) && ui.cat !== k ? `<span class="nb">${fresh(k)}</span>` : ''}</button>`).join('');
+  $('#tabs').innerHTML = CAT.map(([k, l]) => `<button data-cat="${k}" class="${ui.cat === k ? 'on' : ''}">${l}<span class="c">${k === 'disc' ? 'البورصة' : ((N.counts || {})[k] || 0) + ' مهم 24س'}</span>${fresh(k) && ui.cat !== k ? `<span class="nb">${fresh(k)}</span>` : ''}</button>`).join('');
+  if (ui.cat === 'disc') { app.innerHTML = discView(); return; }
+  const tp = I.filter(x => x.cat === ui.cat && x.imp && x.an && Date.now() - new Date(x.at) < 864e5).sort((a, b) => (b.held - a.held) || (b.sc - a.sc))[0];
   let L = dedupe(I.filter(x => x.cat === ui.cat && (!ui.imp || x.imp || x.held) && (!ui.mine || x.held))).sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  app.innerHTML = (ui.cat !== 'stocks' ? mood() : '') + `<div class="f"><button data-imp class="${ui.imp ? 'on' : ''}">⭐ المهمة بس</button>${ui.cat === 'stocks' ? `<button data-mine class="${ui.mine ? 'on' : ''}">💼 أسهمك</button>` : ''}</div>`
+  app.innerHTML = (ui.cat !== 'stocks' ? mood() : '') + (tp ? `<div class="top1"><div class="k">⭐ الأهم دلوقتي · ${ago(tp.at)}</div><a class="t" href="#" data-nid-go="${esc(tp.id)}">${esc(tp.t)}</a><div class="k">${esc(tp.an.impact || tp.an.what || '')}</div></div>` : '') + `<div class="f"><button data-imp class="${ui.imp ? 'on' : ''}">⭐ المهمة بس</button>${ui.cat === 'stocks' ? `<button data-mine class="${ui.mine ? 'on' : ''}">💼 أسهمك</button>` : ''}</div>`
     + (L.slice(0, 60).map(card).join('') || '<div class="empty">مفيش أخبار هنا دلوقتي.</div>')
     + `<div class="foot"><button class="btn g" data-test>🔔 جرّب إشعار</button><button class="btn g" data-unpair>افصل الجهاز ده</button></div><div class="k" style="text-align:center">بيتحدث لوحده · آخر تحديث ${new Date(N.at).toLocaleTimeString('ar-EG-u-nu-latn', {hour: '2-digit', minute: '2-digit'})}</div>`;
   if (focus) { const f = focus; focus = null; const it = I.find(x => x.id === f); if (it && it.cat !== ui.cat) { ui.cat = it.cat; ui.imp = false; return render(); }
     requestAnimationFrame(() => { const el = document.querySelector(`[data-nid="${CSS.escape(f)}"]`); if (el) { el.scrollIntoView({block: 'center', behavior: 'smooth'}); el.classList.add('flash'); } }); }
 }
 document.addEventListener('click', async e => {
+  const g = e.target.closest('[data-nid-go]'); if (g) { e.preventDefault(); focus = g.dataset.nidGo; ui.imp = false; render(); return; }
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.cat) { ui.cat = b.dataset.cat; scrollTo(0, 0); render(); }
+  else if (b.dataset.evs) { evd.sub = b.dataset.evs; render(); }
+  else if (b.hasAttribute('data-evmore')) { evd.n += 40; render(); }
   else if (b.hasAttribute('data-imp')) { ui.imp = !ui.imp; render(); }
   else if (b.hasAttribute('data-mine')) { ui.mine = !ui.mine; render(); }
   else if (b.hasAttribute('data-test')) { b.disabled = true; b.textContent = 'اتبعت… بص على الإشعارات'; try { await call('test', {token: ls.get('rn_tok')}); } catch (x) { b.textContent = 'ماوصلش: ' + x.message; } }
@@ -164,7 +253,7 @@ async function load() {
 hashFocus();
 if (!standalone && /iPhone|iPad/.test(navigator.userAgent) && !ls.get('rn_tok')) viewInstall(); else load();
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { ui.prev = ls.get('rn_seen', ui.prev); load(); } });
-setInterval(() => { if (document.visibilityState === 'visible' && ls.get('rn_tok')) load(); }, 120000);
+setInterval(() => { if (document.visibilityState === 'visible' && ls.get('rn_tok')) { load(); if (ui.cat === 'disc') loadEv(); } }, 120000);
 })();
 </script>
 </body>

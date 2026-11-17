@@ -1,5 +1,5 @@
 // رادار صفار — service worker: shows push notifications, sets the icon badge, opens the news item on tap.
-const V = 'rn-v1';
+const V = 'rn-v2';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil((async () => { for (const k of await caches.keys()) if (k !== V) await caches.delete(k); await self.clients.claim(); })()));
 self.addEventListener('fetch', e => {
