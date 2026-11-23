@@ -97,7 +97,7 @@ async function sql0(q, attempt = 0) {
 }
 const INFL = {};
 function loadKey(key, q, ttl = 60000) { const c = cache[key]; if (c && Date.now() - c.at < ttl) return Promise.resolve(c.d); if (INFL[key]) return INFL[key]; return (INFL[key] = sql(q).then(d => { cache[key] = {d, at: Date.now()}; return d; }).finally(() => { delete INFL[key]; })); }
-function reportErr(e) { try { console.error(e); const p = {route: location.hash, msg: String(e && e.message || e), stack: String(e && e.stack || '').slice(0, 1800), ver: 'v155'}; sql(`select public.soffar_client_err_log('${JSON.stringify(p).replace(/'/g, "''")}'::jsonb) as j`).catch(() => {}); } catch (x) {} }
+function reportErr(e) { try { console.error(e); const p = {route: location.hash, msg: String(e && e.message || e), stack: String(e && e.stack || '').slice(0, 1800), ver: 'v156'}; sql(`select public.soffar_client_err_log('${JSON.stringify(p).replace(/'/g, "''")}'::jsonb) as j`).catch(() => {}); } catch (x) {} }
 window.addEventListener('error', ev => reportErr(ev.error || ev.message));
 setTimeout(() => { const ap = $('#app'); if (ap && !D && /جاري تحميل السوق/.test(ap.textContent)) { ap.innerHTML = '<div class="banner">التحميل بياخد وقت أطول من العادي (الاتصال بـ Supabase بطيء). <button class="btn" id="retry2" type="button">حاول تاني</button></div>'; const b = $('#retry2'); if (b) b.onclick = () => { busy = false; load(); }; } }, 25000);
 async function load() {
@@ -6021,11 +6021,28 @@ function proContext(t, q) {
   previous_ai_analysis: prev ? {at: prev.at, price_then: prev.p, verdict: prev.v, headline: prev.h, setup: prev.s} : null});
  return {ctx: base, F};
 }
+
+async function deepQ(t, q) {
+ try {
+  const {data: id, error} = await window.SB.rpc('soffar_ai_ask', {p_t: t, p_q: q || null}); if (error) throw error;
+  ui.dai[t] = {busy: true, at: Date.now(), q: q || null}; render();
+  const t0 = Date.now();
+  while (Date.now() - t0 < 5 * 60e3) {
+   await new Promise(r => setTimeout(r, 3000));
+   const {data: p} = await window.SB.rpc('soffar_ai_poll', {p_id: id}); if (!p) continue;
+   if (p.status === 'done' && p.res) { const r = (window.__m && window.__m.byT[t]) || {}; ui.dai[t] = {res: p.res, at: Date.now(), q: q || null, p: +r.p || null}; render(); return; }
+   if (p.status === 'err') { ui.dai[t] = {err: 'Claude ماقدرش يكمل التحليل: ' + (p.err || '')}; render(); return; }
+   const seen = p.worker_seen ? Date.now() - new Date(p.worker_seen) : 1e9;
+   if (p.status === 'new' && Date.now() - t0 > 25000 && seen > 60000) { ui.dai[t] = {err: 'التطبيق الأساسي مش مفتوح على اللاب توب دلوقتي، فـ Claude مش هيستلم السؤال. افتحه من زرار «🤖 اسأل Claude في التطبيق الأصلي».'}; render(); return; }
+  }
+  ui.dai[t] = {err: 'الرد اتأخر أكتر من 5 دقايق — جرّب تاني.'}; render();
+ } catch (e) { ui.dai[t] = {err: 'ماقدرتش أبعت السؤال لـ Claude: ' + ((e && e.message) || '')}; render(); }
+}
 async function deepAI(t, force, q, bg) {
  const ex = ui.dai[t]; if (ex && ex.busy) return; if (!force && ex && ex.res && Date.now() - ex.at < 15 * 60e3) return;
  ui.dai[t] = {busy: true, at: Date.now(), q: q || null}; render();
  let sample = null; try { sample = await window.claude.use('sample'); } catch (e) {}
- if (!sample) { ui.dai[t] = {err: 'التحليل العميق محتاج الصفحة تكون مفتوحة من claude.ai.'}; render(); return; }
+ if (!sample) { return deepQ(t, q); }
  const need = [], put = (k, f) => need.push(sql(`select public.${f}() as j`).then(d => { if (d) cache[k] = {d, at: Date.now()}; }).catch(() => {}));
  if (!cache.mac || !cache.mac.d) put('mac', 'soffar_macro_page'); if (!cache.nst || !cache.nst.d) put('nst', 'soffar_news_stats'); if (!cache.nhead || !cache.nhead.d) put('nhead', 'soffar_app_news_head');
  if (!cache['stock-' + t] || !cache['stock-' + t].d) need.push(loadKey('stock-' + t, `select public.soffar_app_stock('${t}') as j`, 60000).catch(() => {}));
@@ -6081,6 +6098,20 @@ ${JSON.stringify(ctx)}`;
  } catch (e) { ui.dai[t] = {err: e && e.code === 'not_granted' ? 'التحليل مقفول للصفحة دي — اسمح بيه من إعدادات الصفحة.' : e && e.code === 'rate_limited' ? 'طلبات كتير دلوقتي، جرّب بعد دقيقة.' : 'التحليل ما اكتملش: ' + ((e && e.message) || '')}; }
  render();
 }
+// v156: answer the Claude questions queued from Mohamed's direct-read copy (GitHub Pages) — this page runs inside claude.ai, so it can ask Claude
+let AIQ = {busy: false, ok: null};
+setInterval(async () => {
+ if (AIQ.busy || !mcp || /شريف|عمر/.test(document.title)) return;
+ if (AIQ.ok === null) { try { AIQ.ok = !!(window.claude && await window.claude.use('sample')); } catch (e) { AIQ.ok = false; } }
+ if (!AIQ.ok) return;
+ AIQ.busy = true;
+ try {
+  const j = await sql('select public.soffar_ai_q_next() as j'); if (!j || !j.t) return;
+  await deepAI(j.t, true, j.q || null, true);
+  const d = ui.dai[j.t] || {}, esc2 = s => String(s).replace(/'/g, "''");
+  await sql(`select public.soffar_ai_q_done(${+j.id}, ${d.res ? `'${esc2(JSON.stringify(d.res))}'::jsonb` : 'null'}, ${d.err ? `'${esc2(d.err)}'` : 'null'}) as j`);
+ } catch (e) {} finally { AIQ.busy = false; }
+}, 15000);
 // ---- charts ----
 function proDayChart(F, R) {
  if (!F || !F.d || F.d.length < 10) return '';
@@ -7107,5 +7138,7 @@ window.__sbReady.then(boot);
 </script>
 
 <div id="dbadge" style="position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:9000;font:12px system-ui;background:#0f2a1d;color:#7CFFB2;border:1px solid #2f7a52;border-radius:10px;padding:5px 9px;direction:rtl">⚡ قراءة مباشرة</div>
+<a id="daskc" target="_blank" rel="noopener" hidden style="position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(128px + env(safe-area-inset-bottom,0px));z-index:9000;font:600 13px system-ui;background:#2a2110;color:#E9B44C;border:1px solid #E9B44C;border-radius:10px;padding:6px 10px;text-decoration:none;direction:rtl">🤖 اسأل Claude في التطبيق الأصلي</a>
+<script>setInterval(() => { const a = document.getElementById('daskc'); if (a) { const m = location.hash.match(/^#stock-([A-Z0-9]+)/); a.hidden = !m; if (m) a.href = 'https://claude.ai/artifact/SgRSB8VwBuh2c36apRwhVS#stock-' + m[1]; } }, 800);</script>
 <script>setInterval(() => { const s = window.__dstat, b = document.getElementById('dbadge'); if (!b || !s) return; b.textContent = `⚡ قراءة مباشرة · آخر طلب ${s.ms} مللي · ${s.n} طلب${s.fail ? ' · ' + s.fail + ' فشل' : ''}`; }, 1000);</script>
 </body></html>
