@@ -92,7 +92,7 @@ async function sql(q, attempt = 0) { await sqlSlot(Date.now() - UIT < 2500); try
 async function sql0(q, attempt = 0) {
  const t0 = performance.now(), {data, error} = await window.SB.rpc('soffar_call', {q});
  const S0 = window.__dstat; S0.n++; S0.ms = Math.round(performance.now() - t0); S0.last = Date.now();
- if (error) { S0.fail++; if (attempt < 1 && !/not allowed/.test(error.message || '')) { await new Promise(r => setTimeout(r, 800)); return sql0(q, attempt + 1); } throw {code: 'db', message: error.message}; }
+ if (error) { S0.fail++; if (/JWT|expired|401/i.test((error.message || '') + (error.code || ''))) { try { await window.SB.auth.refreshSession(); } catch (er) {} } if (attempt < 1 && !/not allowed/.test(error.message || '')) { await new Promise(r => setTimeout(r, 800)); return sql0(q, attempt + 1); } throw {code: 'db', message: error.message}; }
  return data;
 }
 const INFL = {};
