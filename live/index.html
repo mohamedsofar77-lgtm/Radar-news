@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>رادار صفار لايف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* layout: sticky status bar · ticker of best opportunities · state chips · one table of stocks (cards on phones) · side feed */
+:root{color-scheme:dark;--bg:#0B1016;--panel:#111922;--panel2:#17212C;--line:#223040;--tx:#E6EDF4;--mut:#93A3B4;--gold:#E9B44C;--up:#38D39F;--dn:#FF6F61;--info:#6FB7FF;--y:#ffd76a;
+--f:'IBM Plex Sans Arabic',system-ui,'Segoe UI',Tahoma,sans-serif;--n:'IBM Plex Mono',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--f)}
+.num{font-family:var(--n);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.up{color:var(--up)}.dn{color:var(--dn)}.gold{color:var(--gold)}.k{color:var(--mut);font-size:12px}
+.wrap{padding:10px max(14px,env(safe-area-inset-left,0px)) 40px max(14px,env(safe-area-inset-right,0px));display:grid;gap:10px}
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:8px max(14px,env(safe-area-inset-left,0px));background:#0d1620;border-bottom:1px solid var(--line)}
+.bar b.t{font-size:15px}.it{display:flex;flex-direction:column;line-height:1.2}.it span{font-size:10.5px;color:var(--mut)}.it b{font-size:14px}
+.live{margin-inline-start:auto;display:flex;align-items:center;gap:6px;font-size:12px}.live i{width:8px;height:8px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up)}.live.bad i{background:var(--dn);box-shadow:0 0 8px var(--dn)}
+.tick{display:flex;align-items:center;gap:10px;overflow:hidden;border:1px solid #2f7a52;border-radius:12px;background:linear-gradient(90deg,#0f2a1d,var(--panel) 40%);padding:6px 10px;min-height:42px}
+a{color:inherit;text-decoration:none}.tick,.tw,#ptk,#pm,.g>*{min-width:0}.wrap{grid-template-columns:minmax(0,1fr)}body{overflow-x:hidden}
+.tick .tl{font-weight:700;color:var(--up);white-space:nowrap}.tw{flex:1;overflow:hidden}.tr2{display:inline-flex;gap:10px;white-space:nowrap;animation:tk linear infinite}.tick:hover .tr2{animation-play-state:paused}
+@keyframes tk{from{transform:translateX(0)}to{transform:translateX(50%)}}@media (prefers-reduced-motion:reduce){.tr2{animation:none}.tw{overflow-x:auto}}
+.ti{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px 9px;display:inline-flex;gap:6px;align-items:center}
+.mine{display:flex;gap:6px;overflow-x:auto}.mt{flex:0 0 auto;display:grid;grid-template-columns:auto auto;gap:0 10px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2)}
+.mt.r{border-color:var(--dn)}.mt.o{border-color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.c{font:inherit;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:#0c1424;color:var(--mut);cursor:pointer}.c.on{color:#fff;background:#1d3157;border-color:#4a6bb5}
+.c:focus-visible,.ti:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.g{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:10px;align-items:start}@media (max-width:1000px){.g{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0}
+.tbw{overflow:auto;max-height:calc(100vh - 290px)}
+table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px}
+th{position:sticky;top:0;background:var(--panel);color:var(--mut);font-weight:600;font-size:11px;padding:4px;white-space:nowrap;text-align:center}
+td{background:#121c30;padding:5px 6px;text-align:center;white-space:nowrap}td:first-child{text-align:start;border-radius:0 8px 8px 0}td:last-child{border-radius:8px 0 0 8px;text-align:start;white-space:normal;min-width:190px}
+tr.q td{opacity:.55}tr.l td:first-child{box-shadow:inset -4px 0 0 var(--mc)}
+.s-g{--mc:var(--up)}.s-r{--mc:var(--dn)}.s-o{--mc:var(--gold)}.s-y{--mc:var(--y)}.s-b{--mc:var(--info)}
+.b{display:inline-block;font-weight:700;font-size:12px;padding:1px 8px;border-radius:999px}.b.g{background:#123826;color:var(--up)}.b.r{background:#3a161b;color:var(--dn)}.b.o{background:#3a2c12;color:var(--gold)}.b.y{background:#2a2412;color:var(--y)}.b.b{background:#172a52;color:#9db8ff}
+td small{display:block;color:#c3d0e8;font-size:11px;line-height:1.4}
+.dc{display:inline-block;font-weight:700;font-size:12px;padding:2px 8px;border-radius:7px}.dc.g{background:#123826;color:var(--up)}.dc.b{background:#172a52;color:#9db8ff}.dc.a{background:#1d2b44;color:#cfe0ff}.dc.o{background:#3a2c12;color:var(--gold)}.dc.r{background:#3a161b;color:var(--dn)}.dc.n{background:#1a2230;color:var(--mut)}
+.feed{max-height:calc(100vh - 260px);overflow:auto;display:grid;gap:4px}.fi{display:grid;grid-template-columns:42px 1fr;gap:6px;padding:5px 6px;border-radius:8px;background:#0c1424;border-inline-start:3px solid var(--mc,var(--mut));font-size:12px}
+.login{max-width:380px;margin:12vh auto;display:grid;gap:10px;padding-inline:16px}.login input,.login button{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--tx)}.login button{background:var(--gold);color:#1a1405;font-weight:700;cursor:pointer;border:0}
+.btn{font:inherit;font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--tx);cursor:pointer}
+@media (max-width:640px){table,tbody{display:block}thead{display:none}tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;padding:8px 10px;margin-bottom:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+ td{background:none!important;padding:0!important;text-align:start;opacity:1!important}td::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--mut)}td:first-child{grid-column:1/-1;font-size:15px}td:first-child::before{display:none}td:last-child{grid-column:1/-1}tr.l{border-inline-start:4px solid var(--mc)}td.x{display:none}}
+</style>
+</head>
+<body>
+<div id="app"><div class="login"><b>بيحمّل…</b></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+const URL0 = 'https://jttsvackcwgidkxakwsg.supabase.co', KEY = 'sb_publishable_vdtYmvNULPMtkHXK-ztYpg_7Bk4P36h';
+const APP = 'https://claude.ai/artifact/SgRSB8VwBuh2c36apRwhVS';
+const sb = window.supabase.createClient(URL0, KEY, {auth: {persistSession: true, autoRefreshToken: true}});
+const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const n2 = (v, d = 2) => v == null || !isFinite(+v) ? '—' : (+v).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+const P = v => v == null ? '—' : n2(v, +v < 1 ? 3 : +v < 100 ? 2 : 2), pc = v => v == null ? '—' : (+v >= 0 ? '+' : '') + n2(v, 2) + '%', cl = v => +v > 0 ? 'up' : +v < 0 ? 'dn' : '';
+const big = v => v == null ? '—' : Math.abs(v) >= 1e9 ? n2(v / 1e9, 2) + ' مليار' : Math.abs(v) >= 1e6 ? n2(v / 1e6, 1) + ' م' : n2(v / 1e3, 0) + ' ألف';
+const hm = t => new Date(t).toLocaleTimeString('en-GB', {timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit'});
+const cairo = () => { const p = new Intl.DateTimeFormat('en-GB', {timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', weekday: 'short', hour12: false}).formatToParts(new Date()); const g = k => (p.find(x => x.type === k) || {}).value; return {m: +g('hour') * 60 + +g('minute'), wd: g('weekday')}; };
+const inSession = () => { const c = cairo(); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'].includes(c.wd) && c.m >= 600 && c.m <= 870; };
+const DW5 = {'اشتري': 'اشتري', 'زوّد': 'اشتري', 'ادخل': 'اشتري', 'جهّز': 'راقب', 'راقب': 'راقب', 'احتفظ': 'احتفظ', 'خفّف': 'خفّف', 'بيع': 'بيع', 'ابعد': 'ابعد', 'تجاهل': 'ابعد', 'ناقص': 'ابعد'};
+const DC = {'اشتري': 'g', 'راقب': 'b', 'احتفظ': 'a', 'خفّف': 'o', 'بيع': 'r', 'ابعد': 'n'};
+const MST = {brk: ['⚡', 'اختراق', 'o'], dn: ['🔻', 'هبوط', 'r'], mom: ['🚀', 'زخم', 'g'], res: ['🧱', 'مقاومة', 'y'], prep: ['🌱', 'استعداد', 'b']}, MSO = ['brk', 'dn', 'mom', 'res', 'prep'];
+const S = {live: null, full: null, f: 'all', q: false, log: [], prev: {}, rtt: null, okAt: 0, err: '', fullAt: 0};
+try { S.f = localStorage.getItem('sl_f') || 'all'; } catch (e) {}
+
+function stateOf(e) {
+  const lv = e.lv, st = lv && lv[0], chg = +e.chg || 0, buy = e.buy == null ? 50 : +e.buy, tr = e.tr, c15 = tr ? +tr[1] : null, vr = tr ? +tr[5] : null, rv = e.rv;
+  const fresh = lv && lv[2] && Date.now() - new Date(lv[2]) <= 45 * 60000;
+  if (st === 'brk' && fresh && chg > 0) return ['brk', `عدّى ${P(lv[1])} — ماتطاردش، استنى رجوعه`];
+  if (st === 'sup_brk') return ['dn', `كسر الدعم ${P(lv[1])}`];
+  if (st === 'fail') return ['dn', `اختراق كاذب — رجع تحت ${P(lv[1])}`];
+  if (c15 != null && c15 <= -1 && buy < 45) return ['dn', `نازل ${pc(c15)} في 15 د والبيع غالب`];
+  if (chg <= -3 && (c15 == null || c15 < 0)) return ['dn', `نازل ${pc(chg)} ولسه بيضعف`];
+  if (chg >= 2 && (c15 == null || c15 >= 0.5) && ((rv != null && rv >= 1.2) || (vr != null && vr >= 1.5)) && buy >= 55) return ['mom', `طالع ${pc(chg)}${c15 != null ? ` · ${pc(c15)} في 15 د` : ''} · الشراء ${n2(buy, 0)}%`];
+  if (st === 'test_res') return ['res', `بيضغط على ${P(lv[1])}${buy >= 55 ? ' والشراء قوي' : ''}`];
+  if (st === 'rej_res') return ['res', `ارتد من المقاومة ${P(lv[1])}`];
+  const r = []; let sc = 0;
+  if (st === 'retest_ok') { sc += 4; r.push('✅ إعادة اختبار اتأكدت عند ' + P(lv[1])); } else if (st === 'retest') { sc += 3; r.push('↩️ بيعيد اختبار ' + P(lv[1])); } else if ((st === 'near_sup' || st === 'sup_ok') && buy >= 50) { sc += 2; r.push('🛟 عند الدعم والشراء ماسك'); }
+  if (buy >= 58 && chg > -1 && chg < 1.5 && +e.v >= 2e6) { sc += 3; r.push(`🔵 تجميع: شراء ${n2(buy, 0)}%`); }
+  if (rv != null && rv >= 1.5 && chg > -1 && chg < 2) { sc += 2; r.push(`📊 حجم ${n2(rv, 1)}× والسعر هادي`); }
+  if (sc >= 3 && chg < 3 && chg > -2) return ['prep', r.slice(0, 2).join(' · ')];
+  return null;
+}
+function rows() {
+  const L = S.live, F = S.full; if (!L || !F) return [];
+  const base = Object.fromEntries((F.base || []).map(b => [b[0], b])), out = [];
+  const c = cairo(), frac = Math.max(0.08, Math.min(1, (c.m - 600) / 270));
+  (L.live || []).forEach(a => {
+    const [t, p, chg, v, buy, at] = a, b = base[t]; if (!b && !(+v >= 1e6)) return; if (/^(TEST|EGX)/.test(t)) return;
+    const e = {t, p, chg, v, buy, at, n: b && b[1], sec: b && b[2], fd: b && b[3], h: b && b[4], qty: b && b[5], cost: b && b[6], v20: b && b[10], tr: (F.trend || {})[t] || null, lv: (F.lvl || {})[t] || null};
+    e.rv = e.v20 && inSession() ? +v / (+e.v20 * frac) : null;
+    e.dw = DW5[e.fd] || e.fd; e.neg = ['ابعد', 'خفّف', 'بيع'].includes(e.dw);
+    const s = stateOf(e); e.ms = s ? s[0] : null; e.mw = s ? s[1] : ''; if (e.neg && ['brk', 'mom', 'prep'].includes(e.ms)) e.mw += ' · ⚠ القرار ضد الدخول';
+    if (+v >= 1e6 || e.h) out.push(e);
+  });
+  const first = !S.seen; S.seen = 1;
+  out.forEach(e => { const o = S.prev[e.t]; if (e.ms && o !== e.ms && !first) S.log.unshift({at: Date.now(), t: e.t, s: e.ms, w: e.mw}); S.prev[e.t] = e.ms || null; });
+  if (S.log.length > 60) S.log.length = 60;
+  return out;
+}
+const arr = v => v == null ? '<span class="k">—</span>' : `<span class="${+v >= 0.3 ? 'up' : +v <= -0.3 ? 'dn' : 'k'}">${+v >= 0.3 ? '↗' : +v <= -0.3 ? '↘' : '→'} <span class="num">${pc(v)}</span></span>`;
+function view() {
+  const A = rows(), L = S.live, age = L && L.px_at ? Math.max(0, Math.round((Date.now() - new Date(L.px_at)) / 1000)) : null, stale = inSession() && age != null && age > 30;
+  const ix = (L && L.idx) || {}, e30 = ix.EGX30, e70 = ix.EGX70EWI;
+  const it = (l, v, c) => `<span class="it"><span>${l}</span><b class="${c || ''}">${v}</b></span>`;
+  const bar = `<header class="bar"><b class="t">⚡ رادار صفار لايف</b>${it('EGX30', e30 ? `<span class="num">${pc(e30[1])}</span>` : '—', e30 ? cl(e30[1]) : '')}${it('EGX70 متساوي', e70 ? `<span class="num">${pc(e70[1])}</span>` : '—', e70 ? cl(e70[1]) : '')}${it('عمر الأسعار', age == null ? '—' : `<span class="num">${age}</span> ث`, stale ? 'dn' : 'up')}${it('زمن الطلب', S.rtt == null ? '—' : `<span class="num">${S.rtt}</span> مللي`, '')}${it('بيتحدث', 'كل 3 ث', '')}
+   <span class="live ${S.err || stale ? 'bad' : ''}"><i></i>${S.err ? esc(S.err) : inSession() ? 'قراءة مباشرة من السيرفر' : 'الجلسة مقفولة'}</span><a class="btn" href="${APP}" target="_blank" rel="noopener">التطبيق الكامل ↗</a><button type="button" class="btn" id="out">خروج</button></header>`;
+  if (!S.full) return [bar, '', '<div class="card k">بيحمّل…</div>'];
+  // ticker
+  const T = A.filter(e => ['mom', 'brk', 'prep'].includes(e.ms) && !e.neg).sort((a, b) => (MSO.indexOf(a.ms) - MSO.indexOf(b.ms)) || ((+b.chg || 0) - (+a.chg || 0))).slice(0, 15);
+  const ti = e => `<a class="ti" href="${APP}#stock-${esc(e.t)}" target="_blank" rel="noopener"><b>${esc(e.t)}</b><span class="num">${P(e.p)}</span><span class="num ${cl(e.chg)}">${pc(e.chg)}</span><span class="b ${MST[e.ms][2]}">${MST[e.ms][0]} ${MST[e.ms][1]}</span>${e.dw ? `<span class="dc ${DC[e.dw] || 'n'}">${esc(e.dw)}</span>` : ''}</a>`;
+  const tk = T.length ? `<div class="tick"><span class="tl">⭐ أعلى الفرص ${T.length}</span><div class="tw"><div class="tr2" style="animation-duration:${Math.max(30, T.length * 7)}s">${T.map(ti).join('')}${T.map(ti).join('')}</div></div></div>` : `<div class="tick"><span class="tl">⭐ أعلى الفرص</span><span class="k">${inSession() ? 'مفيش فرص بشروطها دلوقتي.' : 'الجلسة مقفولة.'}</span></div>`;
+  // my holdings
+  const M = A.filter(e => e.h && e.qty > 0).map(e => Object.assign(e, {pl: e.cost ? (e.p * e.qty / e.cost - 1) * 100 : null}));
+  const mine = M.length ? `<div class="mine">${M.sort((a, b) => (b.ms === 'dn') - (a.ms === 'dn') || (a.chg - b.chg)).map(e => `<a class="mt ${e.ms === 'dn' ? 'r' : e.dw === 'خفّف' || e.dw === 'بيع' ? 'o' : ''}" href="${APP}#stock-${esc(e.t)}" target="_blank" rel="noopener"><b>${esc(e.t)}</b><span class="num">${P(e.p)}</span><span class="num ${cl(e.chg)}">${pc(e.chg)}</span><span class="dc ${DC[e.dw] || 'n'}">${esc(e.dw || '—')}</span></a>`).join('')}</div>` : '';
+  // table
+  const f = S.f, cnt = k => A.filter(e => e.ms === k).length;
+  const chip = (k, l, n) => `<button type="button" class="c ${f === k ? 'on' : ''}" data-f="${k}" aria-pressed="${f === k}">${l} <span class="num">${n}</span></button>`;
+  let L2 = A.filter(e => f === 'all' ? true : f === 'mine' ? e.h : e.ms === f);
+  L2.sort((a, b) => ((b.h && b.ms === 'dn') - (a.h && a.ms === 'dn')) || ((b.ms ? 10 - MSO.indexOf(b.ms) : 0) - (a.ms ? 10 - MSO.indexOf(a.ms) : 0)) || (+b.v - +a.v));
+  const lit = L2.filter(e => e.ms), quiet = L2.filter(e => !e.ms), R = lit.concat(S.q || f === 'mine' ? quiet : []);
+  const row = e => { const s = e.ms ? MST[e.ms] : null; return `<tr class="${s ? 'l s-' + s[2] : 'q'}"><td><a href="${APP}#stock-${esc(e.t)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><b>${esc(e.t)}</b>${e.h ? ' 💼' : ''}</a> <small style="display:inline" class="k">${esc(e.n || '')}</small></td>
+    <td data-l="السعر" class="num">${P(e.p)}</td><td data-l="التغيّر" class="num ${cl(e.chg)}">${pc(e.chg)}</td><td data-l="القرار"><span class="dc ${DC[e.dw] || 'n'}">${esc(e.dw || '—')}</span></td>
+    <td data-l="الحجم ×" class="num x">${e.rv != null ? n2(e.rv, 1) + '×' : '—'}</td><td data-l="السيولة" class="num x">${big(+e.v)}</td><td data-l="الشراء" class="num x">${e.buy != null ? n2(e.buy, 0) + '%' : '—'}</td>
+    <td data-l="5د" class="x">${arr(e.tr && e.tr[0])}</td><td data-l="15د" class="x">${arr(e.tr && e.tr[1])}</td><td data-l="VWAP" class="x">${e.tr && e.tr[2] != null ? `<span class="${+e.tr[2] >= 0 ? 'up' : 'dn'}">${+e.tr[2] >= 0 ? 'فوق' : 'تحت'} <span class="num">${pc(e.tr[2])}</span></span>` : '—'}</td>
+    <td data-l="الحالة">${s ? `<span class="b ${s[2]}">${s[0]} ${s[1]}</span><small>${esc(e.mw)}</small>` : '<span class="k">—</span>'}</td></tr>`; };
+  const feed = S.log.filter(x => f === 'all' || f === 'mine' || f === x.s).slice(0, 30).map(x => `<div class="fi s-${MST[x.s][2]}"><span class="num k">${hm(x.at)}</span><span>${MST[x.s][0]} <b>${esc(x.t)}</b> ${esc(x.w)}</span></div>`).join('') || `<div class="k">${inSession() ? 'بيسجّل هنا أول ما سهم يدخل حالة من الخمسة.' : 'الجلسة مقفولة.'}</div>`;
+  return [bar, tk, `${mine}<div class="g"><section class="card"><div class="chips">${chip('all', 'الكل', A.filter(e => e.ms).length)}${MSO.map(k => chip(k, MST[k][0] + ' ' + MST[k][1], cnt(k))).join('')}${chip('mine', '💼 أسهمي', A.filter(e => e.h).length)}</div>
+   <div class="tbw"><table><thead><tr><th>السهم</th><th>السعر</th><th>التغيّر</th><th>القرار</th><th>الحجم ×</th><th>السيولة</th><th>الشراء</th><th>اتجاه 5د</th><th>اتجاه 15د</th><th>من VWAP</th><th>الحالة</th></tr></thead><tbody>${R.map(row).join('')}</tbody></table>${R.length ? '' : `<div class="k">${inSession() ? 'مفيش أسهم في الحالة دي دلوقتي.' : 'الجلسة مقفولة.'}</div>`}</div>
+   ${quiet.length && f !== 'mine' ? `<button type="button" class="btn" id="q">${S.q ? 'اخفي الهاديين' : `اعرض الهاديين (${quiet.length})`}</button>` : ''}</section>
+   <section class="card"><b>🔔 اللي بيحصل</b> <span class="k">الخمس حالات بس</span><div class="feed">${feed}</div></section></div>
+   <div class="k">تجربة قراءة مباشرة من السيرفر من غير Claude. القرار من آخر تحديث للتطبيق الكامل (كل 30 ث)، والأسعار كل 3 ث. تحليل بيانات، مش نصيحة استثمارية.</div>`];
+}
+const PV = {};
+function paint() { const a = $('#app'); if (!$('#pb')) a.innerHTML = '<div id="pb"></div><div class="wrap"><div id="ptk"></div><div id="pm" style="display:grid;gap:10px"></div></div>'; const y = (document.querySelector('.tbw') || {}).scrollTop || 0, [b, t, m] = view(); [['pb', b], ['ptk', t], ['pm', m]].forEach(([id, h]) => { if (PV[id] !== h) { PV[id] = h; $('#' + id).innerHTML = h; } }); const tb = document.querySelector('.tbw'); if (tb) tb.scrollTop = y; }
+async function pull() {
+  if (document.visibilityState === 'hidden') return;
+  const full = !S.full || Date.now() - S.fullAt > 30000, t0 = performance.now();
+  const {data, error} = await sb.rpc('soffar_direct', {p_full: full});
+  S.rtt = Math.round(performance.now() - t0);
+  if (error) { S.err = error.message.includes('not allowed') ? 'الحساب ده مش مسموح له' : 'الاتصال فشل — بيحاول تاني'; paint(); return; }
+  S.err = ''; S.live = data; if (full) { S.full = data; S.fullAt = Date.now(); } paint();
+}
+function login(msg) {
+  Object.keys(PV).forEach(k => delete PV[k]);
+  $('#app').innerHTML = `<form class="login" id="lf"><b style="font-size:18px">⚡ رادار صفار لايف</b><span class="k">ادخل بحساب رادار صفار (نفس حساب Radar V2).</span>
+   <label class="k" for="em">الإيميل</label><input id="em" type="email" autocomplete="username" value="mohamed.sofar77@gmail.com" required>
+   <label class="k" for="pw">الباسورد</label><input id="pw" type="password" autocomplete="current-password" required>
+   <button type="submit">دخول</button>${msg ? `<span class="dn">${esc(msg)}</span>` : ''}</form>`;
+  $('#lf').addEventListener('submit', async ev => { ev.preventDefault(); const {error} = await sb.auth.signInWithPassword({email: $('#em').value.trim(), password: $('#pw').value}); if (error) login('الإيميل أو الباسورد غلط'); else start(); });
+}
+let timer = null;
+function start() { if (timer) return; pull(); timer = setInterval(() => { pull().catch(() => {}); }, 3000); }
+document.addEventListener('click', async e => {
+  const c = e.target.closest('[data-f]'); if (c) { S.f = c.dataset.f; try { localStorage.setItem('sl_f', S.f); } catch (er) {} paint(); return; }
+  if (e.target.closest('#q')) { S.q = !S.q; paint(); return; }
+  if (e.target.closest('#out')) { await sb.auth.signOut(); clearInterval(timer); timer = null; S.live = S.full = null; login(); }
+});
+sb.auth.getSession().then(({data}) => data && data.session ? start() : login());
+})();
+</script>
+</body>
+</html>
