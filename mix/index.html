@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>شاشة التداول الميكس</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{--bg:#090C11;--pn:#11161D;--pn2:#0F151C;--bd:#212833;--bd2:#1A2028;--fg:#E6EAF0;--mut:#9AA4B2;--up:#5BD08F;--dn:#F27C79;--am:#F2B25C;--bl:#7DB8F5;--vi:#C9A7F5;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;font-size:14px;direction:rtl;padding:0 max(12px,env(safe-area-inset-right)) 24px max(12px,env(safe-area-inset-left))}
+button,input{font:inherit;color:inherit}
+.num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.mut{color:var(--mut)}.sm{font-size:12px}.xs{font-size:11px}
+.up{color:var(--up)}.dn{color:var(--dn)}.am{color:var(--am)}.bl{color:var(--bl)}.vi{color:var(--vi)}
+.pnl{background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:12px;min-width:0}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.g{background:#123524;color:var(--up)}.o{background:#3A2A12;color:var(--am)}.r{background:#3B1718;color:var(--dn)}.b{background:#122A40;color:var(--bl)}.n{background:#222932;color:#C3CBD6}.v{background:#2A1F3D;color:var(--vi)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:34px;padding:0 11px;border-radius:8px;border:1px solid #2E3744;background:#161C24;cursor:pointer;font-size:12.5px;white-space:nowrap}
+.btn.on{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:700}
+.tk{font-weight:700;font-family:'IBM Plex Mono',monospace}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 0 8px;border-bottom:1px solid var(--bd2)}
+.gauge{position:relative;width:110px;height:8px;border-radius:4px;background:linear-gradient(to left,#3B1718 0 35%,#2A2F38 35% 60%,#123524 60% 100%)}
+.gauge i{position:absolute;top:-4px;width:3px;height:16px;background:var(--fg);border-radius:2px}
+.tiles{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tile{display:flex;flex-direction:column;gap:3px;flex:1 1 150px;min-width:0;padding:8px 10px;border-radius:9px;background:var(--pn);border:1px solid var(--bd);text-align:right;cursor:pointer}
+.tile.on{border-color:var(--bl);box-shadow:0 0 0 1px var(--bl) inset}
+.mini{display:flex;justify-content:space-between;gap:6px;font-size:11.5px}
+.drw{margin-top:8px;border-color:#2C5A86;background:#0E1823}
+.focus{display:flex;flex-wrap:wrap;gap:8px}
+.fc{display:flex;flex-direction:column;gap:6px;flex:1 1 250px;min-width:0;padding:11px 13px;border-radius:12px;background:var(--pn2);border:1px solid var(--bd);cursor:pointer;text-align:right}
+.fc.hot{border-color:#2F7D52;box-shadow:0 0 0 1px #2F7D52 inset;background:#0E1A14}
+.ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.ring span{background:var(--pn2);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.zone{position:relative;height:8px;border-radius:4px;background:#1F2630}
+.zone b{position:absolute;top:0;bottom:0;background:#2F7D52;border-radius:4px}
+.zone i{position:absolute;top:-4px;width:3px;height:16px;background:var(--fg);border-radius:2px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 8px}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;background:var(--pn)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-weight:500;color:var(--mut);text-align:right;padding:6px;border-bottom:1px solid var(--bd);white-space:nowrap;font-size:11px;position:sticky;top:0;background:var(--pn)}
+th.grp{font-size:11.5px;font-weight:700;border-bottom:2px solid}
+td{padding:7px 6px;border-bottom:1px solid var(--bd2);white-space:nowrap;vertical-align:middle}
+tr.rw{cursor:pointer}tr.rw:hover td{background:#141B24}
+tr.pin td{background:#15142A}
+tr.hl td{background:#0E1A14}
+.dots{display:flex;gap:3px}.dots i{width:8px;height:8px;border-radius:50%;background:#2E3744;display:block}.dots i.y{background:var(--up)}.dots i.u{background:transparent;border:1px dashed #56606E}
+.det td{background:#0C1219;padding:0}
+.dg{display:flex;flex-wrap:wrap;gap:14px;padding:12px}
+.ck{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:3px 0}.ck b{width:16px;flex:none;text-align:center}
+.feed div{padding:5px 0;border-bottom:1px solid var(--bd2);font-size:12.5px}
+.login{max-width:360px;margin:12vh auto;display:flex;flex-direction:column;gap:8px;background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:20px}
+.login input{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid #2E3744;background:var(--bg)}
+.login button{min-height:42px;border-radius:8px;border:0;background:var(--fg);color:var(--bg);font-weight:700;cursor:pointer}
+input.q{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid #2E3744;background:var(--bg);width:130px}
+.row2{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:flex-start}
+.hide-t .c-trend,.hide-m .c-mom,.hide-l .c-liq,.hide-r .c-risk{display:none}
+@media (max-width:700px){.hide-sm{display:none}}
+</style>
+</head>
+<body>
+<div id="app"><div class="login"><b>بيحمّل…</b></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+const URL0 = 'https://jttsvackcwgidkxakwsg.supabase.co', KEY = 'sb_publishable_vdtYmvNULPMtkHXK-ztYpg_7Bk4P36h';
+const sb = window.supabase.createClient(URL0, KEY, {auth: {persistSession: true, autoRefreshToken: true}});
+const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const n2 = (v, d = 2) => v == null || !isFinite(+v) ? '—' : (+v).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+const P = v => v == null ? '—' : n2(v, +v < 1 ? 3 : 2), pc = v => v == null ? '—' : (+v > 0 ? '+' : '') + n2(v, 2) + '%', cl = v => +v > 0 ? 'up' : +v < 0 ? 'dn' : '';
+const hm = t => new Date(t * 1000).toLocaleTimeString('en-GB', {timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit'});
+const DT = {'ادخل': 'g', 'استنى رجوع': 'b', 'جهّز': 'n', 'راقب': 'n', 'ابعد': 'n', 'خفّف': 'o', 'تصريف': 'r'};
+const WARN = ['ابعد', 'خفّف', 'تصريف'];
+const COND = ['السوق قوي أو محايد', 'فوق VWAP بـ 0–2.5%', 'قريب من أعلى سعر في اليوم (<1%)', 'الحجم 1–2.5× المعتاد', 'مش مطاردة: 15 د ≤ 1.5%', 'طالع 1–5% عن امبارح', 'المشتري ≥ 52% وبيزيد'];
+const ls = (k, v) => { try { if (v === undefined) return JSON.parse(localStorage.getItem('mx_' + k)); localStorage.setItem('mx_' + k, JSON.stringify(v)); } catch (e) { return null; } };
+const S = {j: null, err: '', rtt: null, okAt: 0, open: null, tile: null, set: ls('set') || 'all', f: ls('f') || 'all', q: '', view: ls('view') || 'table',
+  pins: new Set(ls('pins') || []), snd: false, disc: ls('disc') || {n: 0, max: 5, loss: 0, lim: 2, d: ''}, hist: [], seenSig: new Set(), first: true};
+const R = r => ({t: r[0], sec: r[1], p: r[2], chg: r[3], sc: r[4], k: r[5] || '-------', dec: r[6], vw: r[7], m15: r[8], hi: r[9], rv: r[10], inf: r[11], dinf: r[12], elo: r[13], ehi: r[14], stp: r[15], t1: r[16], t2: r[17], pat: r[18], val: r[19], rs: r[20], gap: r[21]});
+const rr = x => { const ref = Math.min(x.p, x.ehi); const risk = ref - x.stp; return risk > 0 ? (x.t1 - ref) / risk : null; };
+const dots = k => `<div class="dots" aria-label="${[...k].filter(c => c === '1').length} من 7 شروط">${[...k].map(c => `<i class="${c === '1' ? 'y' : c === '-' ? 'u' : ''}"></i>`).join('')}</div>`;
+const nk = k => [...k].filter(c => c === '1').length;
+const zone = x => { const lo = x.stp, hi = x.t1, span = hi - lo; if (!(span > 0)) return ''; const f = v => Math.max(0, Math.min(100, (v - lo) / span * 100)); return `<div class="zone" role="img" aria-label="مكان السعر من منطقة الدخول"><b style="right:${f(x.elo)}%;left:${100 - f(x.ehi)}%"></b><i style="right:${f(x.p)}%"></i></div>`; };
+const tv = t => `https://www.tradingview.com/chart/?symbol=EGX%3A${encodeURIComponent(t)}`;
+
+function beep() { if (!S.snd) return; try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; o.connect(g); g.connect(a.destination); g.gain.setValueAtTime(.15, a.currentTime); o.start(); o.stop(a.currentTime + .25); } catch (e) {} }
+
+function rankDelta(rows) {
+  const now = Date.now(), cur = {}; rows.forEach((x, i) => cur[x.t] = i + 1);
+  if (!S.hist.length || now - S.hist[S.hist.length - 1].at > 60000) { S.hist.push({at: now, m: cur}); if (S.hist.length > 12) S.hist.shift(); }
+  const ref = S.hist.find(h => now - h.at >= 240000) || S.hist[0];
+  return t => ref && ref.m[t] && cur[t] ? ref.m[t] - cur[t] : null;
+}
+
+function header(j) {
+  const rg = j.regime, br = +j.breadth, rc = rg === 'قوي' ? 'g' : rg === 'محايد' ? 'n' : 'r';
+  const age = S.okAt ? Math.round((Date.now() - S.okAt) / 1000) : null;
+  const d = S.disc, lossC = d.loss >= d.lim ? 'dn' : d.loss >= d.lim / 2 ? 'am' : '';
+  return `<header class="top">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+   <b style="font-size:18px">شاشة التداول</b>
+   <span class="tag ${rc}" style="font-size:13px">السوق ${esc(rg)} · <span class="num">${br}%</span></span>
+   <span class="gauge" role="img" aria-label="مقياس السوق ${br}"><i style="right:${Math.max(0, Math.min(100, br))}%"></i></span>
+   <span class="tag n">${esc(j.phase)}</span>
+   <span class="num" style="font-size:16px">${esc(j.loc)}</span>
+   <span class="xs mut">${S.err ? `<span class="dn">${esc(S.err)}</span>` : `تحديث من <span class="num">${age ?? '—'}</span> ث · <span class="num">${S.rtt ?? '—'}</span> ms`}</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+   <span class="pnl" style="padding:4px 8px;display:flex;gap:8px;align-items:center" aria-label="انضباط اليوم"><span class="xs mut">انضباط</span>
+    <button class="btn" data-dn="-1" aria-label="صفقة أقل">−</button><span class="sm">صفقات <b class="num ${d.n >= d.max ? 'dn' : ''}">${d.n}/${d.max}</b></span><button class="btn" data-dn="1" aria-label="صفقة زيادة">+</button>
+    <button class="btn" data-dl="1" title="سجّل الخسارة">خسارة <b class="num ${lossC}">-${n2(d.loss, 1)}%</b> <span class="xs mut">/ -${d.lim}%</span></button></span>
+   <button class="btn ${S.snd ? 'on' : ''}" data-snd="1">صوت ${S.snd ? 'شغال' : 'مقفول'}</button>
+   <button class="btn ${S.view === 'table' ? 'on' : ''}" data-view="table">الجدول</button><button class="btn ${S.view === 'focus' ? 'on' : ''}" data-view="focus">التركيز</button>
+   <button class="btn" data-fs="1">ملء الشاشة</button><button class="btn" id="out">خروج</button>
+  </div></header>`;
+}
+
+function tiles(j, rows) {
+  const ix = j.idx || {}, it = (k, nm) => ix[k] ? `<button class="tile ${S.tile === k ? 'on' : ''}" data-tile="${k}"><span class="xs mut">${nm}</span><b class="sm"><span class="num">${n2(ix[k][0], 0)}</span> <span class="num ${cl(ix[k][1])}">${pc(ix[k][1])}</span></b><span class="xs ${k === 'EGX70EWI' && ix.EGX30 && +ix[k][1] > +ix.EGX30[1] ? 'bl' : 'mut'}">${k === 'EGX70EWI' && ix.EGX30 ? (+ix[k][1] > +ix.EGX30[1] ? 'الصغيرة بتقود' : 'القيادية بتقود') : 'أقوى 5 ←'}</span></button>` : '';
+  const secs = (j.sectors || []).slice(0, 7).map((s, i) => `<button class="tile ${S.tile === 's' + i ? 'on' : ''}" data-tile="s${i}"><span class="xs mut">${esc(s[0])}</span><span class="mini"><span class="num ${cl(s[1])}">${pc(s[1])}</span><span class="num mut">${n2(s[2], 0)} م</span></span>${(s[4] || []).slice(0, 2).map(x => `<span class="mini"><span class="tk">${esc(x[0])}</span><span class="num ${x[1] >= 70 ? 'up' : ''}">${x[1]}</span></span>`).join('')}</button>`).join('');
+  const f = j.flow || {}, fl = Object.keys(f).length ? `<button class="tile ${S.tile === 'flow' ? 'on' : ''}" data-tile="flow"><span class="xs vi">صافي المستثمرين</span><span class="mini"><span>أجانب</span><span class="num ${cl(f.FO_total)}">${n2(f.FO_total, 1)} م</span></span><span class="mini"><span>أفراد مصريين</span><span class="num ${cl(f.EG_ind)}">${n2(f.EG_ind, 1)} م</span></span></button>` : '';
+  const w = rows.filter(x => WARN.includes(x.dec)), wt = `<button class="tile ${S.tile === 'warn' ? 'on' : ''}" data-tile="warn"><span class="xs am">خلي بالك <span class="num">${w.length}</span></span>${w.filter(x => x.dec !== 'ابعد').slice(0, 2).map(x => `<span class="mini"><span class="tk">${esc(x.t)}</span><span class="${x.dec === 'تصريف' ? 'dn' : 'am'}">${esc(x.dec)}</span></span>`).join('')}</button>`;
+  return `<nav class="tiles" aria-label="التيكرز">${it('EGX30', 'EGX30')}${it('EGX70EWI', 'EGX70')}${it('EGX100EWI', 'EGX100')}${secs}${fl}${wt}</nav>${drawer(j, rows)}`;
+}
+
+function miniTable(list, why) {
+  if (!list.length) return '<p class="sm mut">مفيش أسهم دلوقتي.</p>';
+  return `<div style="overflow-x:auto"><table><thead><tr><th>السهم</th><th>القرار</th><th>قوة الدخول</th><th>الشروط</th><th>التغيّر</th><th>الحجم ×</th><th>منطقة الدخول</th><th>ليه</th></tr></thead><tbody>${list.map(x => `<tr class="rw" data-open="${esc(x.t)}"><td class="tk">${esc(x.t)}</td><td><span class="tag ${DT[x.dec] || 'n'}">${esc(x.dec)}</span></td><td class="num"><b>${x.sc}</b></td><td>${dots(x.k)}</td><td class="num ${cl(x.chg)}">${pc(x.chg)}</td><td class="num">${n2(x.rv, 1)}×</td><td class="num">${P(x.elo)}–${P(x.ehi)}</td><td class="sm">${esc(why(x))}</td></tr>`).join('')}</tbody></table></div>`;
+}
+const whyOf = x => { const m = COND.filter((c, i) => x.k[i] === '0'); return x.dec === 'تصريف' ? 'حجم مفرط والسعر تحت VWAP' : x.dec === 'خفّف' ? 'فجوة اتقفلت أو السوق ضعيف' : x.dec === 'ابعد' ? 'ممتد: مطاردة' : m.length ? 'ناقصه: ' + m.slice(0, 2).join('، ') : 'كل الشروط متحققة'; };
+
+function drawer(j, rows) {
+  if (!S.tile) return '';
+  const ix = j.idx || {}, top = rows.filter(x => !WARN.includes(x.dec)).slice(0, 5);
+  let h = '', body = '';
+  if (S.tile.startsWith('EGX')) {
+    const a = ix.EGX30, b = ix.EGX70EWI;
+    h = `${S.tile === 'EGX30' ? 'EGX30' : S.tile === 'EGX70EWI' ? 'EGX70' : 'EGX100'} · الصورة العامة`;
+    body = `<p class="sm" style="margin:0 0 8px;line-height:1.7">${a && b ? (+b[1] > +a[1] ? `EGX70 <span class="num up">${pc(b[1])}</span> أقوى من EGX30 <span class="num">${pc(a[1])}</span>: الأسهم الصغيرة والمتوسطة هي اللي بتقود، والفرص غالباً فيها.` : `EGX30 <span class="num">${pc(a[1])}</span> أقوى من EGX70 <span class="num">${pc(b[1])}</span>: القيادية هي اللي بتقود.`) : ''} مقياس السوق <span class="num">${j.breadth}%</span> من <span class="num">${j.n}</span> سهم سايل فوق فتحه، يعني السوق <b>${esc(j.regime)}</b>.</p><span class="xs mut">أقوى 5 في السوق كله بقوة الدخول (تكوين المؤشرات مش متربوط لسه):</span>${miniTable(top, whyOf)}`;
+  } else if (S.tile.startsWith('s')) {
+    const s = (j.sectors || [])[+S.tile.slice(1)]; if (!s) return '';
+    const list = (s[4] || []).map(z => rows.find(x => x.t === z[0])).filter(Boolean);
+    h = `${s[0]} · أميز 5`;
+    body = `<p class="sm" style="margin:0 0 8px">متوسط تغيّر أسهمه <span class="num ${cl(s[1])}">${pc(s[1])}</span> · قيمة التداول <span class="num">${n2(s[2], 0)}</span> م · <span class="num">${s[3]}%</span> من أسهمه طالعة.</p>${miniTable(list, whyOf)}`;
+  } else if (S.tile === 'flow') {
+    const f = j.flow || {}, c = k => `<td class="num ${cl(f[k])}">${n2(f[k], 1)}</td>`;
+    h = 'صافي المستثمرين · أسهم فقط · مليون جنيه';
+    body = `<table><thead><tr><th></th><th>أفراد</th><th>مؤسسات</th><th>الإجمالي</th></tr></thead><tbody><tr><td>مصريين</td>${c('EG_ind')}${c('EG_inst')}${c('EG_total')}</tr><tr><td>عرب</td>${c('AR_ind')}${c('AR_inst')}${c('AR_total')}</tr><tr><td>أجانب</td>${c('FO_ind')}${c('FO_inst')}${c('FO_total')}</tr></tbody></table><p class="xs mut" style="margin:6px 0 0">البيانات دي بتتحدّث مع إقفال الجلسة.</p>`;
+  } else if (S.tile === 'warn') {
+    h = 'خلي بالك · تصريف وخفّف وابعد';
+    body = miniTable(rows.filter(x => WARN.includes(x.dec)).sort((a, b) => WARN.indexOf(b.dec) - WARN.indexOf(a.dec)).slice(0, 15), whyOf);
+  }
+  return `<section class="pnl drw" aria-label="${esc(h)}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>${esc(h)}</b><button class="btn" data-tile="${esc(S.tile)}">قفل ✕</button></div>${body}</section>`;
+}
+
+function card(x, i) {
+  const r = rr(x), hot = x.dec === 'ادخل', ring = x.sc >= 70 ? 'var(--up)' : 'var(--bl)', miss = COND.filter((c, k) => x.k[k] === '0');
+  return `<button class="fc ${hot ? 'hot' : ''}" data-open="${esc(x.t)}"><div style="display:flex;align-items:center;gap:10px;width:100%"><div class="ring num" style="background:conic-gradient(${ring} 0 ${x.sc}%,#1F2630 ${x.sc}% 100%)"><span>${x.sc}</span></div>
+  <div style="display:flex;flex-direction:column"><span class="tk" style="font-size:17px">${esc(x.t)}</span><span class="num sm">${P(x.p)} <span class="${cl(x.chg)}">${pc(x.chg)}</span></span></div><span class="tag ${DT[x.dec]}" style="margin-inline-start:auto">${esc(x.dec)}</span></div>
+  ${zone(x)}
+  <div class="mini sm" style="width:100%"><span class="mut">دخول <span class="num">${P(x.elo)}–${P(x.ehi)}</span></span><span class="num">هدف ${P(x.t1)} · وقف ${P(x.stp)}</span></div>
+  <span class="xs mut">شروط <b class="num ${nk(x.k) >= 6 ? 'up' : ''}">${nk(x.k)}/7</b>${r ? ` · ربح:مخاطرة <span class="num">1:${n2(r, 1)}</span>` : ''}${miss.length ? ' · ناقصه: ' + esc(miss.slice(0, 2).join('، ')) : ''}</span></button>`;
+}
+
+function detail(x, j) {
+  const v = [`${esc(j.regime)} · ${j.breadth}%`, pc(x.vw), pc(x.hi), n2(x.rv, 2) + '×', pc(x.m15), pc(x.chg), x.inf == null ? '—' : n2(x.inf, 1) + '%' + (x.dinf == null ? ' (التغيّر بعد 15 د من التسجيل)' : ' · ' + (x.dinf > 0 ? '+' : '') + n2(x.dinf, 1))];
+  const r = rr(x);
+  return `<tr class="det"><td colspan="22"><div class="dg">
+   <div style="flex:1 1 280px;min-width:0"><b class="sm">ليه ${esc(x.t)} ${esc(x.dec)}؟ <span class="num ${nk(x.k) >= 6 ? 'up' : ''}">${nk(x.k)}</span> من <span class="num">7</span> شروط</b>
+    ${COND.map((c, i) => `<div class="ck"><b class="${x.k[i] === '1' ? 'up' : x.k[i] === '-' ? 'mut' : 'dn'}">${x.k[i] === '1' ? '✓' : x.k[i] === '-' ? '…' : '✗'}</b><span>${esc(c)} <span class="num mut">(${esc(v[i])})</span></span></div>`).join('')}
+    ${x.pat ? `<div class="sm mut" style="margin-top:6px">نمط الفجوة: <b>${esc(x.pat)}</b> (فجوة ${pc(x.gap)})</div>` : ''}</div>
+   <div style="flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:7px">
+    <b class="sm">خطة الصفقة</b>${zone(x)}
+    <div class="mini sm"><span class="mut">منطقة الدخول</span><span class="num">${P(x.elo)}–${P(x.ehi)}</span></div>
+    <div class="mini sm"><span class="mut">الوقف</span><span class="num dn">${P(x.stp)}</span></div>
+    <div class="mini sm"><span class="mut">الهدف 1 (+3%)</span><span class="num up">${P(x.t1)}</span></div>
+    <div class="mini sm"><span class="mut">الهدف 2 (حركته اليومية)</span><span class="num up">${P(x.t2)}</span></div>
+    <div class="mini sm"><span class="mut">ربح:مخاطرة</span><span class="num">${r ? '1:' + n2(r, 1) : '—'}</span></div>
+    <div class="mini sm"><span class="mut">قدام قطاعه (${esc(x.sec || '—')})</span><span class="num ${cl(x.rs)}">${pc(x.rs)}</span></div>
+    <span class="xs mut">لو الهدف ما اتحققش النهارده: احتفظ لبكرة طالما السوق مش ضعيف والسعر فوق الوقف.</span>
+   </div>
+   <div style="flex:0 1 200px;display:flex;flex-direction:column;gap:6px">
+    <a class="btn" href="${tv(x.t)}" target="_blank" rel="noopener">شارت TradingView ↗</a>
+    <button class="btn" data-pin="${esc(x.t)}">${S.pins.has(x.t) ? 'شيل التثبيت' : 'ثبّت فوق'}</button>
+   </div></div></td></tr>`;
+}
+
+function table(rows, j, dlt) {
+  const hid = {t: 'hide-t', m: 'hide-m', l: 'hide-l', r: 'hide-r'}, show = {all: '', base: 'hide-t hide-m hide-l hide-r', trend: 'hide-l hide-r', liq: 'hide-t hide-r', risk: 'hide-t hide-l'}[S.set] || '';
+  const body = rows.map((x, i) => {
+    const d = dlt(x.t), bad = WARN.includes(x.dec), r = bad ? null : rr(x), op = S.open === x.t, D = v => bad ? '<span class="mut">—</span>' : v;
+    return `<tr class="rw ${S.pins.has(x.t) ? 'pin' : ''} ${x.dec === 'ادخل' ? 'hl' : ''}" data-open="${esc(x.t)}" aria-expanded="${op}">
+    <td><span class="num">${i + 1}</span> ${d ? `<span class="xs ${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</span>` : ''}</td>
+    <td><span class="tk">${esc(x.t)}</span>${S.pins.has(x.t) ? ' <span class="xs vi">مثبّت</span>' : ''}</td>
+    <td class="num">${P(x.p)}</td><td class="num ${cl(x.chg)}">${pc(x.chg)}</td>
+    <td><b class="num ${x.sc >= 70 ? 'up' : ''}" style="font-size:15px">${x.sc}</b></td><td>${dots(x.k)}</td>
+    <td><span class="tag ${DT[x.dec] || 'n'}">${esc(x.dec)}</span></td>
+    <td class="num c-trend ${cl(x.vw)}">${pc(x.vw)}</td><td class="num c-trend ${x.m15 > 1.5 ? 'am' : cl(x.m15)}">${pc(x.m15)}</td><td class="num c-trend">${pc(x.hi)}</td>
+    <td class="num c-liq ${x.rv > 2.5 ? 'am' : x.rv >= 1 ? 'up' : 'mut'}">${n2(x.rv, 1)}×</td><td class="num c-liq ${x.inf >= 52 ? 'up' : x.inf != null ? 'dn' : ''}">${x.inf == null ? '—' : n2(x.inf, 1) + '%'}</td><td class="num c-liq ${cl(x.dinf)}">${x.dinf == null ? '—' : (x.dinf > 0 ? '+' : '') + n2(x.dinf, 1)}</td><td class="num c-liq">${n2(x.val, 1)}</td>
+    <td class="num c-risk ${cl(x.rs)}">${pc(x.rs)}</td><td class="sm c-risk">${esc(x.pat || '—')}</td><td class="num c-risk">${r ? '1:' + n2(r, 1) : '—'}</td>
+    <td class="num">${D(P(x.elo) + '–' + P(x.ehi))}</td><td class="num dn">${D(P(x.stp))}</td><td class="num up">${D(P(x.t1))}</td><td class="num up c-risk">${D(P(x.t2))}</td>
+    </tr>${op ? detail(x, j) : ''}`;
+  }).join('');
+  return `<div class="tw ${show}"><table><thead>
+   <tr><th class="grp" colspan="7" style="border-color:var(--fg)">السهم والقرار</th><th class="grp c-trend" colspan="3" style="border-color:var(--up);color:var(--up)">الاتجاه</th><th class="grp c-liq" colspan="4" style="border-color:var(--bl);color:var(--bl)">السيولة والمشتري</th><th class="grp c-risk" colspan="3" style="border-color:var(--vi);color:var(--vi)">المخاطرة والنمط</th><th class="grp" colspan="4" style="border-color:var(--fg)">الصفقة</th></tr>
+   <tr><th>#</th><th>السهم</th><th>السعر</th><th>التغيّر</th><th>قوة الدخول</th><th>الشروط</th><th>القرار</th>
+   <th class="c-trend">من VWAP</th><th class="c-trend">15 د</th><th class="c-trend">من القمة</th>
+   <th class="c-liq">الحجم ×</th><th class="c-liq">المشتري</th><th class="c-liq">تغيّره 15د</th><th class="c-liq">القيمة م</th>
+   <th class="c-risk">قدام القطاع</th><th class="c-risk">نمط الفجوة</th><th class="c-risk">ربح:مخاطرة</th>
+   <th>منطقة الدخول</th><th>الوقف</th><th>الهدف 1</th><th class="c-risk">الهدف 2</th></tr></thead><tbody>${body || '<tr><td colspan="21" class="mut">مفيش أسهم بالفلتر ده.</td></tr>'}</tbody></table></div>`;
+}
+
+function feed(j) {
+  const s = (j.sig || []).slice(0, 25);
+  return `<section class="pnl feed" style="flex:1.3 1 380px" aria-label="بيحصل دلوقتي"><b style="display:block;margin-bottom:6px">بيحصل دلوقتي · الإشارات المسجّلة النهارده</b>${s.length ? s.map(x => `<div><span class="num mut">${hm(x[2])}</span> · <span class="tk">${esc(x[0])}</span> ← <span class="tag ${DT[x[1]] || 'n'}">${esc(x[1])}</span> <span class="num mut">${P(x[3])} · درجة ${x[4]}</span></div>`).join('') : '<div class="mut">لسه مفيش إشارات. التسجيل بيبدأ 10:00 كل دقيقة.</div>'}</section>`;
+}
+function legend() {
+  return `<section class="pnl" style="flex:1 1 320px" aria-label="الشروط"><b style="display:block;margin-bottom:6px">الشروط السبعة (من دراسة 73 جلسة)</b><ol class="sm" style="margin:0;padding-inline-start:18px;line-height:1.85">${COND.map(c => `<li>${esc(c)}</li>`).join('')}</ol>
+  <p class="xs mut" style="margin:6px 0 0;line-height:1.7">«ادخل» = أول 6 شروط متحققة بعد 11:00 وقبل 2:00 والسعر جوه منطقة الدخول. الشرط 7 تجريبي ولسه بيتسجّل (النقطة المتقطعة = مفيش بيانات كفاية). منطقة الدخول من VWAP لـ VWAP+1%، والوقف تحت VWAP بـ 1% أو قاع آخر نص ساعة. تحليل بيانات، مش نصيحة استثمارية.</p></section>`;
+}
+
+function view() {
+  const j = S.j; if (!j) return '<div class="login"><b>بيحمّل…</b></div>';
+  let rows = (j.rows || []).map(R);
+  const dlt = rankDelta(rows);
+  const pins = rows.filter(x => S.pins.has(x.t)); rows = pins.concat(rows.filter(x => !S.pins.has(x.t)));
+  const fo = rows.filter(x => ['ادخل', 'استنى رجوع', 'جهّز'].includes(x.dec));
+  let list = rows;
+  if (S.f === 'go') list = rows.filter(x => ['ادخل', 'استنى رجوع'].includes(x.dec)); else if (S.f === 'prep') list = rows.filter(x => x.dec === 'جهّز'); else if (S.f === 'warn') list = rows.filter(x => WARN.includes(x.dec));
+  if (S.q) list = list.filter(x => x.t.includes(S.q.toUpperCase()) || (x.sec || '').includes(S.q));
+  const cnt = k => rows.filter(x => k(x)).length;
+  const focus = S.view === 'focus';
+  return header(j) + tiles(j, rows) +
+   `<section style="margin-top:12px" aria-label="جاهز دلوقتي"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><b>${focus ? 'وضع التركيز · أقوى 5' : 'جاهز دلوقتي'}</b><span class="xs mut">${j.phase === 'مراقبة' ? 'قبل 11:00 القرار «جهّز» بس، زي ما الدراسة قالت' : j.phase === 'إقفال' ? 'بعد 2:00 مفيش دخول جديد · جهّز لبكرة' : 'الضغط على الكارت يفتح السهم'}</span></div>
+    <div class="focus">${fo.slice(0, focus ? 5 : 3).map(card).join('') || '<p class="sm mut">مفيش سهم مكمّل الشروط دلوقتي.</p>'}</div></section>` +
+   (focus ? (S.open ? `<div class="tw" style="margin-top:12px"><table><tbody>${(r => r ? detail(r, j) : '')(rows.find(x => x.t === S.open))}</tbody></table></div>` : '') :
+   `<div class="bar"><span class="sm"><b>الفلتر:</b></span>
+     <button class="btn ${S.f === 'all' ? 'on' : ''}" data-f="all">الكل <span class="num">${rows.length}</span></button>
+     <button class="btn ${S.f === 'go' ? 'on' : ''}" data-f="go">ادخل/استنى <span class="num">${cnt(x => ['ادخل', 'استنى رجوع'].includes(x.dec))}</span></button>
+     <button class="btn ${S.f === 'prep' ? 'on' : ''}" data-f="prep">جهّز <span class="num">${cnt(x => x.dec === 'جهّز')}</span></button>
+     <button class="btn ${S.f === 'warn' ? 'on' : ''}" data-f="warn">خلي بالك <span class="num">${cnt(x => WARN.includes(x.dec))}</span></button>
+     <input class="q" id="q" type="search" placeholder="سهم أو قطاع" value="${esc(S.q)}" aria-label="بحث">
+     <span class="sm hide-sm" style="margin-inline-start:auto"><b>المؤشرات:</b></span>
+     ${[['base', 'أساسي'], ['trend', 'الاتجاه'], ['liq', 'السيولة'], ['risk', 'المخاطرة'], ['all', 'الكل']].map(([k, n]) => `<button class="btn ${S.set === k ? 'on' : ''}" data-set="${k}">${n}</button>`).join('')}
+    </div>${table(list, j, dlt)}`) +
+   `<div class="row2">${feed(j)}${legend()}</div>`;
+}
+
+let lastHtml = '';
+function paint() {
+  const y = window.scrollY, tw = document.querySelector('.tw'), tx = tw ? tw.scrollLeft : 0, foc = document.activeElement && document.activeElement.id === 'q';
+  const h = view(); if (h === lastHtml) return; lastHtml = h; $('#app').innerHTML = h;
+  const tw2 = document.querySelector('.tw'); if (tw2) tw2.scrollLeft = tx; window.scrollTo(0, y);
+  if (foc) { const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+}
+async function pull() {
+  if (document.visibilityState === 'hidden') return;
+  const t0 = performance.now(), {data, error} = await sb.rpc('soffar_mix');
+  S.rtt = Math.round(performance.now() - t0);
+  if (error) { S.err = /not allowed/.test(error.message) ? 'الحساب ده مش مسموح له' : 'الاتصال فشل، بيحاول تاني'; if (/JWT|token/i.test(error.message)) await sb.auth.refreshSession().catch(() => {}); paint(); return; }
+  S.err = ''; S.j = data; S.okAt = Date.now();
+  const sig = data.sig || []; let fresh = false;
+  sig.forEach(x => { const k = x[0] + '|' + x[1]; if (!S.seenSig.has(k)) { S.seenSig.add(k); if (!S.first && x[1] === 'ادخل') fresh = true; } });
+  S.first = false; if (fresh) beep();
+  const today = data.d; if (S.disc.d !== today) { S.disc = {...S.disc, n: 0, loss: 0, d: today}; ls('disc', S.disc); }
+  paint();
+}
+function login(msg) {
+  lastHtml = '';
+  $('#app').innerHTML = `<form class="login" id="lf"><b style="font-size:18px">شاشة التداول · الميكس</b><span class="sm mut">ادخل بحساب رادار صفار.</span>
+   <label class="sm mut" for="em">الإيميل</label><input id="em" type="email" autocomplete="username" value="mohamed.sofar77@gmail.com" required>
+   <label class="sm mut" for="pw">الباسورد</label><input id="pw" type="password" autocomplete="current-password" required>
+   <button type="submit">دخول</button>${msg ? `<span class="dn">${esc(msg)}</span>` : ''}</form>`;
+  $('#lf').addEventListener('submit', async ev => { ev.preventDefault(); const {error} = await sb.auth.signInWithPassword({email: $('#em').value.trim(), password: $('#pw').value}); if (error) login('الإيميل أو الباسورد غلط'); else start(); });
+}
+let timer = null;
+function start() { if (timer) return; pull(); timer = setInterval(() => { pull().catch(() => {}); }, 5000); setInterval(() => { if (S.j) { lastHtml = ''; paint(); } }, 15000); }
+document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value.trim(); paint(); } });
+document.addEventListener('click', async e => {
+  const g = a => e.target.closest('[' + a + ']');
+  let b;
+  if ((b = g('data-pin'))) { const t = b.dataset.pin; S.pins.has(t) ? S.pins.delete(t) : S.pins.add(t); ls('pins', [...S.pins]); paint(); return; }
+  if (e.target.closest('a')) return;
+  if ((b = g('data-open'))) { const t = b.dataset.open; S.open = S.open === t ? null : t; paint(); return; }
+  if ((b = g('data-tile'))) { S.tile = S.tile === b.dataset.tile ? null : b.dataset.tile; paint(); return; }
+  if ((b = g('data-f'))) { S.f = b.dataset.f; ls('f', S.f); paint(); return; }
+  if ((b = g('data-set'))) { S.set = b.dataset.set; ls('set', S.set); paint(); return; }
+  if ((b = g('data-view'))) { S.view = b.dataset.view; ls('view', S.view); paint(); return; }
+  if ((b = g('data-dn'))) { S.disc.n = Math.max(0, S.disc.n + +b.dataset.dn); ls('disc', S.disc); paint(); return; }
+  if (g('data-dl')) { const v = window.prompt ? window.prompt('خسارة اليوم كام %؟', S.disc.loss) : null; if (v != null && isFinite(+v)) { S.disc.loss = Math.abs(+v); ls('disc', S.disc); paint(); } return; }
+  if (g('data-snd')) { S.snd = !S.snd; if (S.snd) beep(); paint(); return; }
+  if (g('data-fs')) { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (er) {} return; }
+  if (e.target.closest('#out')) { await sb.auth.signOut(); clearInterval(timer); timer = null; S.j = null; login(); }
+});
+sb.auth.getSession().then(({data}) => data && data.session ? start() : login());
+})();
+</script>
+</body>
+</html>
