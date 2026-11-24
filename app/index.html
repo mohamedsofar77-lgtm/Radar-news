@@ -10,7 +10,7 @@
 <header class="top">
  <div class="top-in">
   <div class="brand"><svg width="22" height="22" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="#E9B44C" stroke-width="2"/><circle cx="17" cy="17" r="9" fill="none" stroke="#E9B44C" stroke-opacity=".5" stroke-width="2"/><path d="M17 17 L28 9" stroke="#E9B44C" stroke-width="2.5" stroke-linecap="round"/></svg>رادار صفار <span class="k" style="font-weight:600;color:#7CFFB2">⚡ تجربة مباشرة</span></div>
-  <nav class="screens" aria-label="الشاشات"><a href="#now" id="s-now"><i aria-hidden="true">🏠</i>دلوقتي</a><a href="#market" id="s-res"><i aria-hidden="true">📊</i>السوق</a><a href="#trade" id="s-trade"><i aria-hidden="true">⚡</i>التداول</a><a href="#pf" id="s-pf"><i aria-hidden="true">💼</i>محفظتي</a><a href="#news" id="s-news"><i aria-hidden="true">📰</i>الأخبار<b class="nbell" id="nbell" hidden></b></a><a href="#watch" id="s-watch" hidden></a><a href="#quality" id="s-q" title="التجويد وصحة البيانات والإعدادات"><i aria-hidden="true">⚙️</i><span class="m-lab">الأدوات</span></a></nav>
+  <nav class="screens" aria-label="الشاشات"><a href="#now" id="s-now" hidden></a><a href="#desk" id="s-trade"><i aria-hidden="true">⚡</i>الجلسة</a><a href="#market" id="s-res"><i aria-hidden="true">🏛</i>المستثمر</a><a href="#pf" id="s-pf"><i aria-hidden="true">💼</i>محفظتي</a><a href="#news" id="s-news"><i aria-hidden="true">📰</i>الأخبار<b class="nbell" id="nbell" hidden></b></a><a href="#watch" id="s-watch" hidden></a><a href="#quality" id="s-q" title="التجويد وصحة البيانات والإعدادات"><i aria-hidden="true">⚙️</i><span class="m-lab">الأدوات</span></a></nav>
   <div class="search"><label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">ابحث عن سهم</label><input id="q" placeholder="ابحث بالكود أو الاسم…  ( / )" autocomplete="off"><div class="sug" id="sug" hidden></div></div>
   <div class="zm" aria-label="حجم العرض"><button type="button" data-zout="1" title="صغّر">A−</button><span id="zlab">100%</span><button type="button" data-zin="1" title="كبّر">A+</button><button type="button" data-fs="1" title="ملء الشاشة">⛶</button><button type="button" id="rfbtn" data-rf="1" title="حدّث كل البيانات دلوقتي — وكمان بيتحدّث لوحده">↻ تحديث</button><span id="rfst" class="rfst" title="التحديث التلقائي شغال"></span></div><div class="live" id="live"><span class="dot"></span><span>جاري التحميل…</span></div>
  </div>
@@ -69,7 +69,8 @@ const aiTag = (a, full) => !a ? '<span class="k">—</span>' : `<span class="ai 
 const CAIRO_F = new Intl.DateTimeFormat('en-GB', {timeZone: 'Africa/Cairo', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}); let CAIRO_C = {at: 0, v: null};
 function cairo() { const now = Date.now(); if (CAIRO_C.v && now - CAIRO_C.at < 1000) return CAIRO_C.v; const p = Object.fromEntries(CAIRO_F.formatToParts(new Date(now)).map(x => [x.type, x.value])); CAIRO_C = {at: now, v: {wd: p.weekday, m: +p.hour * 60 + +p.minute}}; return CAIRO_C.v; }
 const tradingDay = () => !['Fri', 'Sat'].includes(cairo().wd);
-const inSession = () => tradingDay() && cairo().m >= 570 && cairo().m <= 905;
+// v158: the trading day starts with order entry at 8:30 (pre-open), so the app refreshes live from 8:30 to the close
+const inSession = () => tradingDay() && cairo().m >= 510 && cairo().m <= 905;
 // order book is live from the pre-open (8:30) until the close
 const preOpen = () => tradingDay() && cairo().m >= 510 && cairo().m < 570;
 const liveWin = () => inSession() || preOpen();
@@ -97,8 +98,11 @@ async function sql0(q, attempt = 0) {
 }
 const INFL = {};
 function loadKey(key, q, ttl = 60000) { const c = cache[key]; if (c && Date.now() - c.at < ttl) return Promise.resolve(c.d); if (INFL[key]) return INFL[key]; return (INFL[key] = sql(q).then(d => { cache[key] = {d, at: Date.now()}; return d; }).finally(() => { delete INFL[key]; })); }
-function reportErr(e) { try { console.error(e); const p = {route: location.hash, msg: String(e && e.message || e), stack: String(e && e.stack || '').slice(0, 1800), ver: 'v156'}; sql(`select public.soffar_client_err_log('${JSON.stringify(p).replace(/'/g, "''")}'::jsonb) as j`).catch(() => {}); } catch (x) {} }
+function reportErr(e) { try { console.error(e); const p = {route: location.hash, msg: String(e && e.message || e), stack: String(e && e.stack || '').slice(0, 1800), ver: 'v160'}; sql(`select public.soffar_client_err_log('${JSON.stringify(p).replace(/'/g, "''")}'::jsonb) as j`).catch(() => {}); } catch (x) {} }
 window.addEventListener('error', ev => reportErr(ev.error || ev.message));
+// v159: hovering any ticker code shows the company's Arabic name
+const TKN = {"CANA":"بنك قناة السويس","PAPC":"مؤشر قطاع الورق ومواد تعبئة و تغليف","NAPR":"الوطنية للطباعة","BULM":"مؤشر قطاع المواد البناء","ECAP":"الجوهرة","NCCW":"النصر للأعمال المدنية","ACGC":"العربية لحليج الأقطان","CICH":"سي اي كابيتال القابضة","KWIN":"القاهرة الوطنية للاستثمار والاوراق المالية","ETEL":"المصرية للاتصالات","ADRI":"أراب للتنمية والاستثمار العقاري","MIPH":"مينا فارم للأدوية","SCTS":"قناة السويس لتوطين التكنولوجيا","SPMD":"سبيد ميديكال","EGCH":"كيما","ICLE":"إنكوليس","UTOP":"يوتوبيا","VLMR":"فالمور القابضة للاستثمار","HAVC":"حسن علام للاستثمار ورأس مال المخاطر","WCDF":"مطاحن وسط وغرب الدلتا","EXPA":"البنك المصري لتنمية الصادرات","NIPH":"النيل للادوية","KABO":"كابو","AIDC":"ارابيا للاستثمار والتنمية","ENGY":"مؤشر قطاع الطاقة وخدمات مساندة","SWDY":"السويدى اليكتريك","MEGM":"الشرق الأوسط لصناعة الزجاج","NAHO":"النعيم القابضة","AALR":"العامة لاستصلاح الأراضي","GPPL":"جولدن بيراميدز بلازا","DIFC":"ديفكو","IEEC":"المشروعات الصناعية والهندسية","MFPC":"موبكو","WATP":"بيتومود","RMTV":"رواد مصر","EGAL":"مصر للالومنيوم","UPMS":"الاتحاد الصيدلي","MCQE":"مصر للأسمنت - قنا","CIEB":"كريدي أجريكول","BIDI":"بي اي دي- البدر للاستثمار والتنمية","AMOC":"أموك","FERC":"فيركيم","COPR":"كوبر","ICID":"العالمية للاستثمار والتنمية","UNIP":"يونيفرسال","TEDU":"مؤشر قطاع المنسوجات و سلع معمرة","ODIN":"أودن للاستثمارات المالية","AMES":"المركز الطبي الجديد - الإسكندرية","TRTO":"عبر المحيطات للسياحة","CFGH":"كونكريت فاشون جروب","NCGC":"النيل لحليج الاقطان","TALM":"تعليم لخدمات الإدارة","APSW":"العربية وبولفارا","CPCI":"القاهرة للادوية","NBKE":"الوطني","IGSA":"مؤشر قطاع الخدمات و منتجات صناعية وسيارات","PHAR":"ايبكو","ELSH":"الشمس للاسكان","KNGC":"النصر للزجاج والبلور","EGX100EWI":"مؤشر EGX100 EWI","CEFM":"مطاحن مصر الوسطي","ALEX":"الإسكندرية للأسمنت","EEII":"العربية للصناعات الهندسية","ASCM":"اسيك للتعدين","AMER":"عامر جروب","ORWE":"النساجون الشرقيون","HRHO":"إي اف جي القابضة","ARCC":"العربية للأسمنت","PHGC":"بريميم هيلثكير جروب","OBRI":"العبور للاستثمار العقارى","DTPP":"دلتا للطباعة والتغليف","ELNA":"النصر لتصنيع الحاصلات الزراعية","PRDC":"بايونيرز بروبرتيز للتنمية العمرانية","SAUD":"بنك البركة","EITP":"المصرية للمشروعات السياحية العالمية","EGAS":"غاز مصر","ENGC":"ايكون","SPHT":"الشمس بيراميدز","GMCI":"جى إم سى","GEOS":"جيوس للتجارة والمقاولات","AREH":"المجموعة المصرية العقارية","SHTS":"مؤشر قطاع الخدمات النقل والشحن","IRON":"الحديد والصلب المصرية","ORHD":"اوراسكوم للتنمية مصر","LUTS":"لوتس للاستثمارات الزراعية والتنمية","HDBK":"بنك التعمير والاسكان","GPIM":"جى بى اى للنمو العمرانى","PACH":"باكين","NHPS":"الوطنية للاسكان","ATQA":"عتاقة","EDFM":"مطاحن شرق الدلتا","SEIGA":"السعودية المصرية للاستثمار والتمويل","ADIB":"مصرف أبو ظبي الإسلامي","ENHD":"النصر للاسكان والتعمير","SIEG":"المصريه للمواسير والمنتجات الاسمنتيه سيجوارت","SVCE":"جنوب الوادى للاسمنت","EPCO":"المصرية للدواجن","EGBE":"البنك المصري الخليجي","EGTS":"المصرية للمنتجعات السياحية","DCRC":"دلتا للانشاء والتعمير","TAQA":"طاقة عربية","ROTO":"الرواد","GTWL":"جولدن تكس","HCFI":"لكح جروب","POUL":"القاهرة للدواجن","DAPH":"التعمير والاستشارات الهندسية","MHOT":"مصر للفنادق","ACAP":"اية كابيتال القابضة","IDRE":"الاسماعيلية الجديدة للتطوير","GGCC":"الجيزة العامة للمقاولات","MAAL":"مرسيليا","SUCE":"السويس للاسمنت","OCDI":"سوديك","MPCI":"ممفيس للادوية","CCAPP":"القلعة","ELWA":"الوادي العالمية","FAITA":"بنك فيصل الإسلامي المصري","EDUS":"مؤشر قطاع الخدمات تعليمية","SINA":"سيناء للمنجنيز","EFID":"ايديتا","NEDA":"نيوداب","PRCL":"شينى","EGX30ETF":"وثائق إستثمار صندوق مؤشر إي جي إكس 30","MFSC":"مصر للأسواق الحرة","SKPC":"سيدى كرير للبتروكيماويات","RAKT":"راكتا","HDST":"هيدجستون للاستثمار","RAYA":"راية","SMPP":"الشروق الحديثة للطباعة والتغليف","MILS":"مطاحن شمال القاهرة","LUTS_R1":"حق اكتتاب شركة لوتس للتنمية والاستثمار الزراعى-1","ORAS":"أوراسكوم للإنشاء","ELEC":"الكابلات الكهربائية المصرية","NARE":"مجموعة النعيم العقارية القابضة","INEG":"المجموعة المتكاملة للاعمال الهندسية","DEIN":"الدلتا للتامين","TRDB":"مؤشر قطاع التجارة و موزعون","HLTH":"مؤشر قطاع الرعاية صحية و ادوية","MICH":"مصر لصناعة الكيماويات","UNIT":"المتحدة للاسكان","MMAT":"مرسى مرسى علم","SCEM":"اسمنت سيناء","MOED":"المصرية لنظم التعليم الحديثة","CSAG":"القناة للتوكيلات الملاحية","AIHC":"ارابيا انفستمنتس هولدنج","ESRS":"حديد عز","GTEX":"جيتكس للاستثمارات التجارية والصناعية","UASG":"العربية المتحدة للشحن والتفريغ","MBSC":"مصر بنى سويف للاسمنت","KORA":"قرة لمشروعات الطاقة والاستثمار","EALR":"العربية لاستصلاح الاراضي","ADPC":"آراب ديري","EASB":"ثمار","RKAZ":"ركاز القابضة للاستثمارات المالية","PRMH":"برايم القابضة","SEIG":"السعودية المصرية للاستثمار والتمويل","WKOL":"وادي كوم إمبو","RMDA":"العاشر من رمضان للصناعات الدوائية","EPPK":"الاهرام للطباعة والتغليف","ANCC":"النهضة للصناعات","MKIT":"المصرية الكويتية للأستثمار","MENA":"مينا للاستثمار السياحي","BASC":"مؤشر قطاع الموارد أساسية","EGWA":"المستودعات المصرية العامة","EGSA":"نايل سات","APPC":"العبوات الدوائية المتطورة","CIRA":"القاهرة للإستثمار والتنمية العقارية","COMI":"البنك التجاري الدولي","EAST":"ايسترن كومباني","MEPA":"العبوات الطبية","IFAP":"الدولية للمحاصيل الزراعية","GDWA":"جدوى للتنمية الصناعية","OFH":"او بي المالية القابضة","GGRN":"جو جرين","EHDR":"المصريين للاسكان","EBSC":"أصول للوساطة","PHTV":"بيراميزا","SNFI":"سوهاج الوطنية","ADCI":"العربية للادوية والصناعات الكيماوية","TMGH":"طلعت مصطفى","MPCO":"المنصورة للدواجن","IRAX":"العز الدخيلة للصلب","LCSW":"ليسيكو مصر","BQDC":"بنك القاهرة","RUBX":"روبكس","AFMC":"مطاحن ومخابز الإسكندرية","HBCO":"هيبكو للاستثمارات التجارية والتنمية العقارية","SAIB":"بنك الشركة المصرفية العربية الدولية","GTHE":"جلوبال تليكوم","SMFR":"ايجيفرت","SLAR":"سولار سول للطاقة","GSSC":"العامة للصوامع والتخزين","TRVL":"مؤشر قطاع السياحة وترفيه","SPIN":"سبينالكس","EMFD":"إعمار مصر","TWSA":"توسع للتخصيم","CCAP":"القلعة","EFAC":"الشركة المصرية للسبائك الحديدية","TAMAYUZ":"مؤشر تميز","FIRE":"الأولى للاستثمار","ACFR":"الإسكندرية للحراريات","SIPC":"سبأ","CPME":"كاتليست بارتنرز ميديل ايست","VLMRA":"فالمور القابضة للاستثماربالجنية","ALUM":"الالومنيوم العربية","RTVC":"رمكو","FAIT":"بنك فيصل الإسلامي المصري","ESAC":"مصر جنوب افريقيا للاتصالات","MOIL":"ماريديف","AFDI":"الاهلي للتنمية والاستثمار","AMIA":"الملتقى العربي للاستثمارات","NINH":"مستشفى النزهة","BIOC":"جلاكسو سميثكلاين","ACTF":"اكت فاينانشال للاستشارات","OLFI":"عبور لاند للصناعات الغذائية","RREI":"اليكو","AMPI":"نوفيدا","FTNS":"فتنس برايم للاندية الصحية","MISR":"ايجى ستون","ETRS":"ايجيترانس","CRST":"كريستمارك","ZEOT":"الزيوت المستخلصة","IBCT":"انترناشيونال بزنيس كوربوريشن","EFIC":"المالية والصناعية المصرية","FOBT":"مؤشر قطاع الأغذية و مشروبات و تبغ","QNBA":"بنك قطر الوطني الاهلي","SNFC":"الشرقية الوطنية للامن الغذائي","INFI":"فوديكو","UEFM":"مطاحن مصر العليا","DGTZ":"ديجيتايز","SUGR":"الدلتا للسكر","NDRL":"الحفر الوطنية","SCFM":"مطاحن جنوب القاهرة والجيزة","MOIN":"المهندس للتأمين","ARAB":"المطورون العرب","ACRO":"اكرو مصر","AMII":"العربية للصناعات المعدنية","KZPC":"كفر الزيات للمبيدات والكيماويات","ALCN":"الاسكندرية لتداول الحاويات","KASABF":"وثائق صندوق استثمار أودن للاستثمار في الاسهم المصرية","MLIC":"مصر لتأمينات الحياة","COCE":"مؤشر قطاع المقاولات و إنشاءات هندسية","TORA":"اسمنت طرة","JUFO":"جهينة","NBFC":"مؤشر قطاع الخدمات مالية غير مصرفية","GOUR":"جورمية ايجيبت دوت كوم للاغذية","KRDI":"نهر الخير للتنمية والأستثمار الزراعى والخدمات البيئية","FNAR":"الفنار للمقاولات","YAYT":"شركة صناعة اليايات ومهمات وسائل النقل","SDTI":"شارم دريمز","MTIE":"ام.ام جروب","HELI":"مصر الجديدة للاسكان","ISPH":"ابن سينا فارما","CLHO":"مستشفي كليوباترا","COSG":"القاهرة للزيوت والصابون","BIGP":"بى اى جى للتجارة والاستثمار","UEGC":"الصعيد العامة للمقاولات","OIH":"أوراسكوم للاستثمار القابضة","MOSC":"مصر للزيوت والصابون","BINV":"بي إنفستمنتس القابضة","ABUK":"ابوقير للاسمدة","DOMT":"دومتي","CCRS":"الخليجية الكندية للاستثمار العقاري العربي","ISMA":"الاسماعيلية للدواجن","DSCW":"دايس","EGREF":"وثائق شركة صندوق استثمار المصريين للاستثمار العقارى","TYCN":"تايكون انفستمنتس هولدنج","AXPH":"الاسكندرية للادوية","ZMID":"زهراء المعادي","BANK":"مؤشر قطاع البنوك","EGX70EWI":"مؤشر EGX70 EWI","REAL":"مؤشر قطاع العقارات","RACC":"راية لخدمات مراكز الاتصالات","GIHD":"الغربية الاسلامية للتنمية العمرانية","MCRO":"ماكرو جروب","TANM":"تنمية للاستثمار العقاري","PHDC":"بالم هيلز","ATLC":"ايه تي ليس","OCPH":"اكتوبر فارما","IMCS":"مؤشر قطاع الاتصالات و اعلام و تكنولوجيا المعلومات","VERT":"فرتيكا","CERA":"ريماس","VALU":"يو للتمويل الاستهلاكى","UBEE":"المصرف المتحد ","BTFH":"بلتون المالية القابضة","ICFC":"الدولية للأسمدة","EOSB":"العروبة للسمسرة في الأوراق المالية","MBEG":"ام بي","GRCA":"جراند انفستمنت القابضة للاستثمارات المالية","FWRY":"فوري","CAED":"القاهرة للخدمات التعليمية","MPRC":"مدينة الانتاج الاعلامى","ASPI":"اسباير كابيتال القابضة للاستثمارات المالية","EFIH":"اي فاينانس للاستثمارات المالية والرقمية","AIFI":"أطلس","CNFN":"كونتكت المالية القابضة","ISMQ":"الحديد والصلب للمناجم والمحاجر","GBCO":"جى بى كوربوريشن","AJWA":"اجواء","BONY":"بنيان للتنمية والتجارة","ACAMD":"الشركة العربية لادارة وتطوير الاصول","MASR":"مدينة مصر للاسكان","FCMD":"فيوتشر كير للصناعات الطبية","ELKA":"القاهرة للاسكان"};
+document.addEventListener('mouseover', e => { try { let el = e.target; for (let i = 0; i < 3 && el && el.nodeType === 1 && el !== document.body; i++, el = el.parentElement) { if (el.hasAttribute('title')) return; const ds = el.dataset || {}; let t = [ds.t, ds.tk, ds.ticker, ds.mxo, ds.mxtile].find(v => v && TKN[v]); if (!t && el.childElementCount === 0) { const tx = (el.textContent || '').trim(); const m = tx.length <= 24 && tx.match(/^[#$]?([A-Z][A-Z0-9]{2,5})\b/); if (m && TKN[m[1]]) t = m[1]; } if (t) { el.title = TKN[t]; return; } } } catch (x) {} }, true);
 setTimeout(() => { const ap = $('#app'); if (ap && !D && /جاري تحميل السوق/.test(ap.textContent)) { ap.innerHTML = '<div class="banner">التحميل بياخد وقت أطول من العادي (الاتصال بـ Supabase بطيء). <button class="btn" id="retry2" type="button">حاول تاني</button></div>'; const b = $('#retry2'); if (b) b.onclick = () => { busy = false; load(); }; } }, 25000);
 async function load() {
  if (busy) return; busy = true;
@@ -2334,6 +2338,13 @@ function lastNewsCard(t) {
   <div class="k" style="margin-top:6px">${nx ? `🗓 ${evWhat(nx.e)} — ${esc(nx.l)} ${dShow(nx.d)} (${inDays(daysTo(nx.d))})` : '🗓 مفيش توزيعات أو جمعيات جاية'}</div>
  </section>`;
 }
+// v157: one decision per stock — «قرار الجلسة» from the session screen rules, «المدى المتوسط» from the main engine
+function mixDual(t, r) {
+ const M = window.__mixRows, x = M && M[t], meta = window.__mixMeta || {};
+ if (!x && !(r && r.fd)) return '';
+ const tg = {'ادخل': 'g', 'استنى رجوع': 'b', 'جهّز': 'n', 'راقب': 'n', 'ابعد': 'n', 'خفّف': 'o', 'تصريف': 'r'};
+ return `<div class="sh-mix">${x ? `<span class="k">قرار الجلسة</span><span class="mx-tag ${tg[x.dec] || 'n'}">${esc(x.dec)}</span>${['ادخل', 'استنى رجوع'].includes(x.dec) ? `<span class="k">دخول <span class="num">${x.elo}–${x.ehi}</span> · هدف <span class="num">${x.t1}</span> · وقف <span class="num">${x.stp}</span></span>` : ''}<span class="k">· السوق ${esc(meta.regime || '')}</span>` : ''}${r && r.fd ? `<span class="k">${x ? '· ' : ''}المدى المتوسط</span><span class="dc ${DC[r.fd] || 'n'}">${esc(DW(r.fd))}</span>` : ''}</div>`;
+}
 function stockView(m, t, d, SS, cd) {
  if (!t) return `<section class="card"><h2>السهم</h2><div class="empty">ابحث عن أي سهم فوق، أو اضغط على سهم من أي مكان.</div></section>`;
  const r = m.byT[t] || {t}, a = r.ai, q = (d && d.quote && d.quote.q) || {}, pos = (d && d.position) || {}, ans = ui.ask[t];
@@ -2341,7 +2352,7 @@ function stockView(m, t, d, SS, cd) {
  const tot = SS ? +SS.total : r.sc ? r.sc[0] : null, E = EVT(t), nN = E ? (E.recent || []).filter(e => e.type !== 'halt').length : 0;
  const ring = tot == null || !isFinite(tot) ? '<div class="k">مفيش تقييم</div>' : `<svg class="ring" viewBox="0 0 110 110" role="img" aria-label="تقييم صفار ${tot}"><circle cx="55" cy="55" r="46" fill="none" stroke="#223040" stroke-width="11"/><circle cx="55" cy="55" r="46" fill="none" stroke="${SCHEX[SCC(tot)]}" stroke-width="11" stroke-dasharray="${(tot / 100 * 289).toFixed(1)} 289" stroke-linecap="round" transform="rotate(-90 55 55)"/><text x="55" y="60" text-anchor="middle" fill="#E6EDF4" font-size="28" font-weight="700">${Math.round(tot)}</text><text x="55" y="80" text-anchor="middle" fill="#93A3B4" font-size="11">تقييم صفار</text></svg>`;
  const hero = `<section class="card shero" data-f="sh-${esc(t)}" data-v="${esc(r.fd || '')}">
-  <div class="sid"><div class="snm">${esc(t)} ${r.h ? '<span class="dc a">في محفظتك</span>' : ''}</div><div class="k">${esc(r.n || '')}${r.sec ? ' · ' + esc(r.sec) : ''}</div><div style="margin-top:6px"><span class="num spx">${px(r.p)}</span> ${N(pc(r.c), cl(r.c) + ' spc')}</div></div>
+  <div class="sid"><div class="snm">${esc(t)} ${r.h ? '<span class="dc a">في محفظتك</span>' : ''}</div><div class="k">${esc(r.n || '')}${r.sec ? ' · ' + esc(r.sec) : ''}</div><div style="margin-top:6px"><span class="num spx">${px(r.p)}</span> ${N(pc(r.c), cl(r.c) + ' spc')}</div>${mixDual(t, r)}</div>
   <div class="ctr"><div class="k">القرار النهائي</div><div class="verdict dc ${DC[r.fd] || 'n'}" title="${esc(r.fd || '')}">${esc(DW(r.fd) || '—')}</div><div class="k">درجة ${r.fs ?? '—'}${r.conf != null ? ' · ثقة ' + r.conf + '%' : ''}</div></div>
   <div class="ctr">${ring}${tot != null ? `<div class="k">${SCI(tot)} ${SCL(tot)}</div>` : ''}</div>
   <div class="ctr"><div class="k">توقع AI ${a ? 'لجلسة ' + esc(a.for || '') : ''}</div>${a ? `<div style="font-size:21px;font-weight:700">${aiTag(a, true).replace('class="ai', 'style="font-size:21px" class="ai')}</div><div class="k">${a.dir === 'down' ? 'لحد ' + N(px(+a.down), 'dn') : 'لحد ' + N(px(+a.up), 'up')} · يلغيه ${N(px(+a.inv))}</div>` : '<div class="k" style="margin-top:6px">مفيش توقع مكتوب</div>'}</div>
@@ -4691,8 +4702,11 @@ ${JSON.stringify(ctx)}`;
  }
  function badge(t, secName) { const M = badgeMap(), st = S.bm.sec[secName]; return (M[t] || []).filter((v, i, a) => a.indexOf(v) === i).join('') + (st && st !== 'quiet' ? ` <span title="القطاع: ${SEC[st][0]}">${SEC[st][1]}</span>` : ''); }
  // ===== v108: «شاشة التداول اللحظية» (#desk) — one laptop screen, five layouts to choose from =====
- const DKL = [['mon', '🖥', 'المتابعة'], ['scan', '🔎', 'كل الأسهم لايف'], ['p4', '🗺', 'خريطة السيولة'], ['pg', '🗂', 'الشاشة القديمة']];
- try { const v = localStorage.getItem('dkl'); if (DKL.some(l => l[0] === v)) S.dl = v; } catch (e) {}
+ // v157: «⚡ الجلسة» (mix) is the session screen; the other layouts stay one week under «القديمة»
+ const MXED = /شريف|عمر/.test(document.title);
+ const DKL = MXED ? [['mon', '🖥', 'المتابعة'], ['scan', '🔎', 'كل الأسهم لايف'], ['p4', '🗺', 'خريطة السيولة'], ['pg', '🗂', 'الشاشة القديمة']] : [['mix', '⚡', 'الجلسة'], ['scan', '🔎', 'كل الأسهم لايف'], ['mon', '🖥', 'المتابعة (قديمة)'], ['p4', '🗺', 'خريطة السيولة (قديمة)'], ['pg', '🗂', 'الشاشة القديمة']];
+ S.dl = MXED ? 'mon' : 'mix';
+ try { if (MXED || localStorage.getItem('dkl_v157')) { const v = localStorage.getItem('dkl'); if (DKL.some(l => l[0] === v)) S.dl = v; } else { localStorage.setItem('dkl_v157', '1'); localStorage.setItem('dkl', 'mix'); } } catch (e) {}
  S.dl = S.dl || 'mon'; try { const v = localStorage.getItem('dkmt'); if (['act', 'opp', 'feed', 'mkt'].includes(v)) S.dmt = v; } catch (e) {} S.dflt = S.dflt || {hz: 'all', sec: false, c4: false, rv: false, brk: false, mine: false};
  const dkSec = t => { const D = SD(); if (!D) return null; for (const x of D.sectors || []) { const e = (x.tk || []).find(z => z.t === t); if (e) return {x, e}; } return null; };
  // decision on an open trade (same rules as the trade ticket on #trade)
@@ -4797,8 +4811,8 @@ ${JSON.stringify(ctx)}`;
   const age = d.px_at ? Math.max(0, Math.round((Date.now() - new Date(d.px_at)) / 1000)) : null, live = inSession(), stale = live && age != null && age > 60;
   const c = cairo(), left = live ? Math.max(0, 14 * 60 + 30 - c.m) : null;
   const now = new Date().toLocaleTimeString('en-GB', {timeZone: 'Africa/Cairo', hour12: false});
-  return `<header class="dk-top ${stale ? 'stale' : ''}">${NAV.stack.length ? '<button type="button" class="dk-x" data-back="1" title="رجوع" aria-label="رجوع"><span class="dk-xi">✕</span><span class="dk-xt">رجوع</span></button>' : '<a class="dk-x" href="#trade" title="رجوع لصفحة التداول" aria-label="رجوع لصفحة التداول"><span class="dk-xi">✕</span><span class="dk-xt">رجوع</span></a>'}<b class="dk-lg">⚡ شاشة التداول اللحظية</b>
-   <div class="dk-pill"><span>المزاج</span><b class="${rg ? (rg[0] === 'weak' ? 'dn' : rg[0] === 'strong' ? 'up' : 'gold') : ''}">${rg ? esc(rg[1]) : '—'}</b></div>
+  return `<header class="dk-top ${stale ? 'stale' : ''}">${NAV.stack.length ? '<button type="button" class="dk-x" data-back="1" title="رجوع" aria-label="رجوع"><span class="dk-xi">✕</span><span class="dk-xt">رجوع</span></button>' : ''}<b class="dk-lg">⚡ الجلسة</b>
+   ${(() => { const mm = inSession() && S.mix && S.mix.d; return mm ? `<div class="dk-pill" title="مقياس السوق: نسبة الأسهم السايلة فوق سعر فتحها"><span>السوق</span><b class="${mm.regime === 'قوي' ? 'up' : mm.regime === 'ضعيف' ? 'dn' : 'gold'}">${esc(mm.regime)} <span class="num">${mm.breadth}%</span></b></div>` : `<div class="dk-pill"><span>المزاج</span><b class="${rg ? (rg[0] === 'weak' ? 'dn' : rg[0] === 'strong' ? 'up' : 'gold') : ''}">${rg ? esc(rg[1]) : '—'}</b></div>`; })()}
    <div class="dk-pill"><span>EGX30</span><b class="num ${cl(ix.c)}">${ix.c != null ? pc(ix.c) : '—'}</b></div>
    ${worldPill()}
    <div class="dk-pill"><span>ضغط الشراء</span><b class="num ${t.buy > 52 ? 'up' : t.buy < 48 ? 'dn' : ''}">${t.buy != null ? n2(t.buy, 0) + '%' : '—'}</b></div>
@@ -5260,7 +5274,11 @@ ${JSON.stringify(ctx)}`;
   const chip = (k, l) => `<button type="button" class="mn-c ${k !== 'all' && k !== 'mine' ? MST[k][2] : ''} ${f === k ? 'on' : ''}" data-mnf="${k}" aria-pressed="${f === k}">${l} <small class="num">${k === 'all' ? A.filter(e => e.ms).length : k === 'mine' ? mineN : cnt(k)}</small></button>`;
   let L = A.filter(e => f === 'all' ? true : f === 'mine' ? e.mine : e.ms === f);
   const rank = e => (e.ms ? 10 - MSO.indexOf(e.ms) : 0) * 1e12 + (+e.v || 0);
-  L.sort((a, b) => (b.mine && b.ms === 'dn' ? 1 : 0) - (a.mine && a.ms === 'dn' ? 1 : 0) || rank(b) - rank(a));
+  // v160: rows auto-sorted by decision (buy actions, then exits, hold, watch, avoid); same decision keeps the old order
+  const DCO = ['ادخل', 'اشتري', 'زوّد', 'استنى رجوع', 'جهّز', 'تصريف', 'بيع', 'خفّف', 'احتفظ', 'راقب', 'ابعد', 'تجاهل', 'ناقص'];
+  const decOf = e => { const x = inSession() && window.__mixRows && window.__mixRows[e.t]; return x ? x.dec : e.fd ? DW(e.fd) : ''; };
+  const dRank = e => { const i = DCO.indexOf(decOf(e)); return i < 0 ? DCO.length : i; };
+  L.sort((a, b) => dRank(a) - dRank(b) || (b.mine && b.ms === 'dn' ? 1 : 0) - (a.mine && a.ms === 'dn' ? 1 : 0) || rank(b) - rank(a));
   const lit0 = L.filter(e => e.ms), quiet = L.filter(e => !e.ms), showQ = S.mnq || f === 'mine', CAP = 40, lit = S.mnall ? lit0 : lit0.slice(0, CAP), rows = lit.concat(showQ ? quiet : []);
   const T = cache.montr && cache.montr.d, tAge = T && T.at ? (Date.now() - new Date(T.at)) / 60000 : null;
   const row = e => { const s = e.ms ? MST[e.ms] : null; return `<tr class="${s ? 'mn-l ' + s[2] : 'mn-q'}" data-dks="${esc(e.t)}" data-f="mn-${esc(e.t)}" data-v="${e.ms || ''}${Math.round((+e.chg || 0) * 10)}">
@@ -5270,7 +5288,7 @@ ${JSON.stringify(ctx)}`;
     <td><span class="cell num ${+e.rv >= 2 ? 'h3' : +e.rv >= 1.2 ? 'h2' : ''}">${e.rv != null ? n2(e.rv, 1) + '×' : '—'}</span>${e.tr && e.tr[5] != null && +e.tr[5] >= 2 ? ' <small class="gold" title="آخر شمعة 5 د أكبر من متوسط الشموع اللي قبلها">🔥</small>' : ''}</td>
     <td class="mn-tr">${arr(e.tr && e.tr[0])}</td><td class="mn-tr">${arr(e.tr && e.tr[1])}</td>
     <td>${e.tr && e.tr[2] != null ? `<span class="${+e.tr[2] >= 0 ? 'up' : 'dn'}">${+e.tr[2] >= 0 ? 'فوق' : 'تحت'} <span class="num">${pc(e.tr[2])}</span></span>` : '<span class="k">—</span>'}</td>
-    <td>${e.fd ? `<span class="dc ${DC[e.fd] || 'n'}">${esc(DW(e.fd))}</span>` : '<span class="k">—</span>'}</td>
+    <td>${(() => { const x = inSession() && window.__mixRows && window.__mixRows[e.t]; return x ? `<span class="mx-tag ${MXD[x.dec] || 'n'}" title="قرار الجلسة · المدى المتوسط: ${esc(e.fd ? DW(e.fd) : '—')}">${esc(x.dec)}</span>` : e.fd ? `<span class="dc ${DC[e.fd] || 'n'}">${esc(DW(e.fd))}</span>` : '<span class="k">—</span>'; })()}</td>
     <td class="mn-st">${s ? `<span class="mn-b ${s[2]}">${s[0]} ${s[1]}</span><small>${esc(e.mw)}</small>` : '<span class="k">—</span>'}</td></tr>`; };
   return `<div class="mn ${inDesk ? 'mn-dk' : ''}">${monTicker(A)}${monTop(m, inDesk)}${monMine()}
    <div class="mn-g"><section class="tv-sect mn-main"><div class="tv-h"><b>🖥 شاشة المتابعة</b><button type="button" class="dxbtn mn-fs" data-mnfs="1">${inDesk ? (document.fullscreenElement ? '🗗 اخرج من ملء الشاشة' : '⛶ ملء الشاشة') : '⛶ ملء الشاشة'}</button><span class="k">${T && T.at ? `شموع 5 د لحد ${hm(T.at)}${inSession() && tAge > 12 ? ' ⚠️ متأخرة' : ''} · ` : ''}السطر بينوّر بس لو السهم في حالة من الخمسة · دوس على سهم يفتح شارت 5 د</span></div>
@@ -5310,8 +5328,113 @@ ${JSON.stringify(ctx)}`;
  const DMT = [['act', '💼 قراري'], ['opp', '🎯 الفرص'], ['feed', '🔔 بيحصل'], ['mkt', '🧭 السوق']];
  const dMob = () => window.innerWidth <= 1100;
  const pn = (t, k, body, cls) => `<section class="dk-pn ${cls || ''}"><div class="dk-ph"><b>${t}</b>${k ? `<span class="k">${k}</span>` : ''}</div><div class="dk-pb">${body}</div></section>`;
+ // ===== v157: «⚡ الجلسة» — the one session screen (mix rules from the 73-session study), shared decision for the whole app =====
+ const MXD = {'ادخل': 'g', 'استنى رجوع': 'b', 'جهّز': 'n', 'راقب': 'n', 'ابعد': 'n', 'خفّف': 'o', 'تصريف': 'r'}, MXW = ['ابعد', 'خفّف', 'تصريف'];
+ const MXC = ['السوق قوي أو محايد', 'فوق VWAP بـ 0–2.5%', 'قريب من أعلى سعر في اليوم (<1%)', 'الحجم 1–2.5× المعتاد', 'مش مطاردة: 15 د ≤ 1.5%', 'طالع 1–5% عن امبارح', 'المشتري ≥ 52% وبيزيد'];
+ const mxR = r => ({t: r[0], sec: r[1], p: r[2], chg: r[3], sc: r[4], k: r[5] || '-------', dec: r[6], vw: r[7], m15: r[8], hi: r[9], rv: r[10], inf: r[11], dinf: r[12], elo: r[13], ehi: r[14], stp: r[15], t1: r[16], t2: r[17], pat: r[18], val: r[19], rs: r[20], gap: r[21]});
+ try { S.mxpins = new Set(JSON.parse(localStorage.getItem('mxpins') || '[]')); S.mxset = localStorage.getItem('mxset') || 'all'; S.mxf = localStorage.getItem('mxf') || 'all'; } catch (e) { S.mxpins = new Set(); S.mxset = 'all'; S.mxf = 'all'; }
+ S.mxh = [];
+ function mixLoad() {
+  if (/شريف|عمر/.test(document.title) || S._mxq) return;
+  const c = S.mix; if (c && Date.now() - c.at < (inSession() ? 8000 : 120000)) return;
+  S._mxq = 1;
+  sql('select public.soffar_mix() as j').then(j => { S._mxq = 0; if (j && j.rows) { S.mix = {d: j, at: Date.now()}; const M = {}; j.rows.forEach(r => { M[r[0]] = mxR(r); }); window.__mixRows = M; window.__mixMeta = {regime: j.regime, breadth: j.breadth, phase: j.phase, d: j.d}; } else S.mix = {d: (S.mix || {}).d, at: Date.now()}; const v = route().v; if (v === 'desk' || v === 'stock') render(); })
+   .catch(() => { S._mxq = 0; S.mix = {d: (S.mix || {}).d, at: Date.now(), err: 1}; });
+ }
+ const mxN = k => [...k].filter(c => c === '1').length;
+ const mxRR = x => { const ref = Math.min(x.p, x.ehi), rk = ref - x.stp; return rk > 0 ? (x.t1 - ref) / rk : null; };
+ const mxDots = k => `<span class="mx-dots" aria-label="${mxN(k)} من 7 شروط">${[...k].map(c => `<i class="${c === '1' ? 'y' : c === '-' ? 'u' : ''}"></i>`).join('')}</span>`;
+ const mxZone = x => { const lo = x.stp, hi = x.t1, sp = hi - lo; if (!(sp > 0)) return ''; const f = v => Math.max(0, Math.min(100, (v - lo) / sp * 100)); return `<div class="mx-zone" role="img" aria-label="مكان السعر من منطقة الدخول"><b style="right:${f(x.elo)}%;left:${100 - f(x.ehi)}%"></b><i style="right:${f(x.p)}%"></i></div>`; };
+ const mxWhy = x => { const miss = MXC.filter((c, i) => x.k[i] === '0'); return x.dec === 'تصريف' ? 'حجم مفرط والسعر تحت VWAP' : x.dec === 'خفّف' ? 'فجوة اتقفلت أو السوق ضعيف' : x.dec === 'ابعد' ? 'ممتد: مطاردة' : miss.length ? 'ناقصه: ' + miss.slice(0, 2).join('، ') : 'كل الشروط متحققة'; };
+ function mxDelta(rows) {
+  const now = Date.now(), cur = {}; rows.forEach((x, i) => { cur[x.t] = i + 1; });
+  if (!S.mxh.length || now - S.mxh[S.mxh.length - 1].at > 60000) { S.mxh.push({at: now, m: cur}); if (S.mxh.length > 12) S.mxh.shift(); }
+  const ref = S.mxh.find(h => now - h.at >= 240000) || S.mxh[0];
+  return t => ref && ref.m[t] && cur[t] ? ref.m[t] - cur[t] : null;
+ }
+ function mxCard(x) {
+  const r = mxRR(x), ring = x.sc >= 70 ? 'var(--up,#5BD08F)' : '#7DB8F5', miss = MXC.filter((c, k) => x.k[k] === '0');
+  return `<button type="button" class="mx-fc ${x.dec === 'ادخل' ? 'hot' : ''}" data-mxo="${esc(x.t)}"><span class="mx-fh"><span class="mx-ring num" style="background:conic-gradient(${ring} 0 ${x.sc}%,#1F2630 ${x.sc}% 100%)"><span>${x.sc}</span></span>
+   <span class="mx-fn"><b class="mx-tk">${esc(x.t)}</b><span class="num">${P(x.p)} <span class="${cl(x.chg)}">${pc(x.chg)}</span></span></span><span class="mx-tag ${MXD[x.dec]}">${esc(x.dec)}</span></span>
+   ${mxZone(x)}<span class="mx-mini"><span class="k">دخول <span class="num">${P(x.elo)}–${P(x.ehi)}</span></span><span class="num">هدف ${P(x.t1)} · وقف ${P(x.stp)}</span></span>
+   <span class="k mx-xs">شروط <b class="num ${mxN(x.k) >= 6 ? 'up' : ''}">${mxN(x.k)}/7</b>${r ? ` · ربح:مخاطرة <span class="num">1:${n2(r, 1)}</span>` : ''}${miss.length ? ' · ناقصه: ' + esc(miss.slice(0, 2).join('، ')) : ''}</span></button>`;
+ }
+ function mxDetail(x, j) {
+  const v = [`${esc(j.regime)} · ${j.breadth}%`, pc(x.vw), pc(x.hi), n2(x.rv, 2) + '×', pc(x.m15), pc(x.chg), x.inf == null ? '—' : n2(x.inf, 1) + '%' + (x.dinf == null ? ' (التغيّر بعد 15 د تسجيل)' : ' · ' + (x.dinf > 0 ? '+' : '') + n2(x.dinf, 1))];
+  const r = mxRR(x), bad = MXW.includes(x.dec);
+  return `<tr class="mx-det"><td colspan="21"><div class="mx-dg">
+   <div class="mx-dc"><b>ليه ${esc(x.t)} «${esc(x.dec)}»؟ <span class="num ${mxN(x.k) >= 6 ? 'up' : ''}">${mxN(x.k)}</span> من <span class="num">7</span> شروط</b>
+    ${MXC.map((c, i) => `<div class="mx-ck"><b class="${x.k[i] === '1' ? 'up' : x.k[i] === '-' ? 'k' : 'dn'}">${x.k[i] === '1' ? '✓' : x.k[i] === '-' ? '…' : '✗'}</b><span>${esc(c)} <span class="num k">(${esc(v[i])})</span></span></div>`).join('')}
+    ${x.pat ? `<div class="k" style="margin-top:6px">نمط الفجوة: <b>${esc(x.pat)}</b> (فجوة ${pc(x.gap)})</div>` : ''}</div>
+   <div class="mx-dc">${bad ? `<b>${esc(mxWhy(x))}</b><div class="k" style="margin-top:6px">مفيش خطة دخول للسهم ده دلوقتي.</div>` : `<b>خطة الصفقة</b>${mxZone(x)}
+    <div class="mx-mini"><span class="k">منطقة الدخول</span><span class="num">${P(x.elo)}–${P(x.ehi)}</span></div><div class="mx-mini"><span class="k">الوقف</span><span class="num dn">${P(x.stp)}</span></div>
+    <div class="mx-mini"><span class="k">الهدف 1 (+3%)</span><span class="num up">${P(x.t1)}</span></div><div class="mx-mini"><span class="k">الهدف 2 (حركته اليومية)</span><span class="num up">${P(x.t2)}</span></div>
+    <div class="mx-mini"><span class="k">ربح:مخاطرة</span><span class="num">${r ? '1:' + n2(r, 1) : '—'}</span></div><span class="k mx-xs">لو الهدف ما اتحققش النهارده: احتفظ لبكرة طالما السوق مش ضعيف والسعر فوق الوقف.</span>`}
+    <div class="mx-mini"><span class="k">قدام قطاعه (${esc(x.sec || '—')})</span><span class="num ${cl(x.rs)}">${pc(x.rs)}</span></div></div>
+   <div class="mx-dc mx-act"><button type="button" class="dxbtn" data-dks="${esc(x.t)}">📈 صفحة السهم (شارت 5 د)</button><button type="button" class="dxbtn" data-mxpin="${esc(x.t)}">${S.mxpins.has(x.t) ? 'شيل التثبيت' : '📌 ثبّت فوق'}</button></div></div></td></tr>`;
+ }
+ function mxDrawer(j, rows) {
+  const k = S.mxtile; if (!k) return '';
+  const ix = j.idx || {}, top = rows.filter(x => !MXW.includes(x.dec)).slice(0, 5);
+  const mini = L => L.length ? `<div class="dk-tbw"><table class="dk-tb mx-tb"><thead><tr><th>السهم</th><th>القرار</th><th>قوة الدخول</th><th>الشروط</th><th>التغيّر</th><th>الحجم ×</th><th>منطقة الدخول</th><th>ليه</th></tr></thead><tbody>${L.map(x => `<tr data-mxo="${esc(x.t)}"><td class="mx-tk">${esc(x.t)}</td><td><span class="mx-tag ${MXD[x.dec]}">${esc(x.dec)}</span></td><td class="num"><b>${x.sc}</b></td><td>${mxDots(x.k)}</td><td class="num ${cl(x.chg)}">${pc(x.chg)}</td><td class="num">${n2(x.rv, 1)}×</td><td class="num">${MXW.includes(x.dec) ? '—' : P(x.elo) + '–' + P(x.ehi)}</td><td class="k">${esc(mxWhy(x))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="k">مفيش أسهم دلوقتي.</div>';
+  let h = '', b = '';
+  if (k.startsWith('EGX')) { const a = ix.EGX30, c = ix.EGX70EWI; h = (k === 'EGX70EWI' ? 'EGX70' : k === 'EGX100EWI' ? 'EGX100' : 'EGX30') + ' · الصورة العامة';
+   b = `<p class="mx-p">${a && c ? (+c[1] > +a[1] ? `EGX70 <span class="num up">${pc(c[1])}</span> أقوى من EGX30 <span class="num">${pc(a[1])}</span>: الأسهم الصغيرة والمتوسطة هي اللي بتقود.` : `EGX30 <span class="num">${pc(a[1])}</span> أقوى من EGX70 <span class="num">${pc(c[1])}</span>: القيادية هي اللي بتقود.`) : ''} مقياس السوق <span class="num">${j.breadth}%</span> من <span class="num">${j.n}</span> سهم سايل فوق فتحه، يعني السوق <b>${esc(j.regime)}</b>.</p><span class="k">أقوى 5 في السوق كله (تكوين المؤشرات مش متربوط لسه):</span>${mini(top)}`; }
+  else if (k.startsWith('s')) { const s = (j.sectors || [])[+k.slice(1)]; if (!s) return ''; h = s[0] + ' · أميز 5'; b = `<p class="mx-p">متوسط تغيّر أسهمه <span class="num ${cl(s[1])}">${pc(s[1])}</span> · قيمة التداول <span class="num">${n2(s[2], 0)}</span> م · <span class="num">${s[3]}%</span> من أسهمه طالعة.</p>${mini((s[4] || []).map(z => rows.find(x => x.t === z[0])).filter(Boolean))}`; }
+  else if (k === 'flow') { const f = j.flow || {}, c = q => `<td class="num ${cl(f[q])}">${n2(f[q], 1)}</td>`; h = 'صافي المستثمرين · أسهم فقط · مليون جنيه'; b = `<div class="dk-tbw"><table class="dk-tb"><thead><tr><th></th><th>أفراد</th><th>مؤسسات</th><th>الإجمالي</th></tr></thead><tbody><tr><td>مصريين</td>${c('EG_ind')}${c('EG_inst')}${c('EG_total')}</tr><tr><td>عرب</td>${c('AR_ind')}${c('AR_inst')}${c('AR_total')}</tr><tr><td>أجانب</td>${c('FO_ind')}${c('FO_inst')}${c('FO_total')}</tr></tbody></table></div><span class="k">بتتحدّث مع إقفال الجلسة.</span>`; }
+  else if (k === 'warn') { h = 'خلي بالك · تصريف وخفّف وابعد'; b = mini(rows.filter(x => MXW.includes(x.dec)).sort((a, c) => MXW.indexOf(c.dec) - MXW.indexOf(a.dec)).slice(0, 15)); }
+  return `<section class="mx-drw"><div class="mx-mini"><b>${esc(h)}</b><button type="button" class="dxbtn" data-mxtile="${esc(k)}">قفل ✕</button></div>${b}</section>`;
+ }
+ function mixView(m) {
+  mixLoad();
+  const j = S.mix && S.mix.d;
+  if (!j) return `<div class="k dk-emp">${S.mix && S.mix.err ? 'شاشة الجلسة مش قادرة تقرا البيانات دلوقتي، بتحاول تاني…' : 'بيحمّل شاشة الجلسة…'}</div>`;
+  let rows = (j.rows || []).map(mxR); const dlt = mxDelta(rows);
+  rows = rows.filter(x => S.mxpins.has(x.t)).concat(rows.filter(x => !S.mxpins.has(x.t)));
+  const fo = rows.filter(x => ['ادخل', 'استنى رجوع', 'جهّز'].includes(x.dec)), cnt = f => rows.filter(f).length;
+  let L = rows; if (S.mxf === 'go') L = rows.filter(x => ['ادخل', 'استنى رجوع'].includes(x.dec)); else if (S.mxf === 'prep') L = rows.filter(x => x.dec === 'جهّز'); else if (S.mxf === 'warn') L = rows.filter(x => MXW.includes(x.dec)); else if (S.mxf === 'mine') { const H = held(); L = rows.filter(x => H.has ? H.has(x.t) : (H || []).includes && H.includes(x.t)); }
+  if (S.mxq) { const q = S.mxq.toUpperCase(); L = L.filter(x => x.t.includes(q) || (x.sec || '').includes(S.mxq)); }
+  const ix = j.idx || {}, rc = j.regime === 'قوي' ? 'g' : j.regime === 'محايد' ? 'n' : 'r';
+  const it = (k, nm) => ix[k] ? `<button type="button" class="mx-tile ${S.mxtile === k ? 'on' : ''}" data-mxtile="${k}"><span class="k">${nm}</span><b><span class="num">${n2(ix[k][0], 0)}</span> <span class="num ${cl(ix[k][1])}">${pc(ix[k][1])}</span></b><span class="k mx-xs">${k === 'EGX70EWI' && ix.EGX30 ? (+ix[k][1] > +ix.EGX30[1] ? 'الصغيرة بتقود' : 'القيادية بتقود') : 'أقوى 5 ←'}</span></button>` : '';
+  const secs = (j.sectors || []).slice(0, 7).map((s, i) => `<button type="button" class="mx-tile ${S.mxtile === 's' + i ? 'on' : ''}" data-mxtile="s${i}"><span class="k">${esc(s[0])}</span><span class="mx-mini"><span class="num ${cl(s[1])}">${pc(s[1])}</span><span class="num k">${n2(s[2], 0)} م</span></span>${(s[4] || []).slice(0, 2).map(x => `<span class="mx-mini"><span class="mx-tk">${esc(x[0])}</span><span class="num ${x[1] >= 70 ? 'up' : ''}">${x[1]}</span></span>`).join('')}</button>`).join('');
+  const f = j.flow || {}, flT = Object.keys(f).length ? `<button type="button" class="mx-tile ${S.mxtile === 'flow' ? 'on' : ''}" data-mxtile="flow"><span class="k">صافي المستثمرين</span><span class="mx-mini"><span>أجانب</span><span class="num ${cl(f.FO_total)}">${n2(f.FO_total, 1)} م</span></span><span class="mx-mini"><span>أفراد مصريين</span><span class="num ${cl(f.EG_ind)}">${n2(f.EG_ind, 1)} م</span></span></button>` : '';
+  const W = rows.filter(x => MXW.includes(x.dec)), wT = `<button type="button" class="mx-tile ${S.mxtile === 'warn' ? 'on' : ''}" data-mxtile="warn"><span class="k gold">خلي بالك <span class="num">${W.length}</span></span>${W.filter(x => x.dec !== 'ابعد').slice(0, 2).map(x => `<span class="mx-mini"><span class="mx-tk">${esc(x.t)}</span><span class="${x.dec === 'تصريف' ? 'dn' : 'gold'}">${esc(x.dec)}</span></span>`).join('')}</button>`;
+  const sh = {all: '', base: 'mx-ht mx-hm mx-hl mx-hr', trend: 'mx-hl mx-hr', liq: 'mx-ht mx-hr', risk: 'mx-ht mx-hl'}[S.mxset] || '';
+  const body = L.map((x, i) => { const d = dlt(x.t), bad = MXW.includes(x.dec), r = bad ? null : mxRR(x), D2 = v => bad ? '<span class="k">—</span>' : v, op = S.mxopen === x.t;
+   return `<tr class="mx-rw ${S.mxpins.has(x.t) ? 'pin' : ''} ${x.dec === 'ادخل' ? 'hl' : ''}" data-mxo="${esc(x.t)}" data-f="mx-${esc(x.t)}" data-v="${esc(x.dec)}${x.sc}">
+    <td><span class="num">${i + 1}</span> ${d ? `<small class="${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>` : ''}</td><td><span class="mx-tk">${esc(x.t)}</span>${S.mxpins.has(x.t) ? ' 📌' : ''}</td>
+    <td class="num">${P(x.p)}</td><td class="num ${cl(x.chg)}">${pc(x.chg)}</td><td><b class="num ${x.sc >= 70 ? 'up' : ''}">${x.sc}</b></td><td>${mxDots(x.k)}</td><td><span class="mx-tag ${MXD[x.dec] || 'n'}">${esc(x.dec)}</span></td>
+    <td class="num mx-t ${cl(x.vw)}">${pc(x.vw)}</td><td class="num mx-t ${x.m15 > 1.5 ? 'gold' : cl(x.m15)}">${pc(x.m15)}</td><td class="num mx-t">${pc(x.hi)}</td>
+    <td class="num mx-l ${x.rv > 2.5 ? 'gold' : x.rv >= 1 ? 'up' : 'k'}">${n2(x.rv, 1)}×</td><td class="num mx-l ${x.inf >= 52 ? 'up' : x.inf != null ? 'dn' : ''}">${x.inf == null ? '—' : n2(x.inf, 1) + '%'}</td><td class="num mx-l ${cl(x.dinf)}">${x.dinf == null ? '—' : (x.dinf > 0 ? '+' : '') + n2(x.dinf, 1)}</td><td class="num mx-l">${n2(x.val, 1)}</td>
+    <td class="num mx-r ${cl(x.rs)}">${pc(x.rs)}</td><td class="mx-r k">${esc(x.pat || '—')}</td><td class="num mx-r">${r ? '1:' + n2(r, 1) : '—'}</td>
+    <td class="num">${D2(P(x.elo) + '–' + P(x.ehi))}</td><td class="num dn">${D2(P(x.stp))}</td><td class="num up">${D2(P(x.t1))}</td><td class="num up mx-r">${D2(P(x.t2))}</td></tr>${op ? mxDetail(x, j) : ''}`; }).join('');
+  const sig = (j.sig || []).slice(0, 20);
+  return `<div class="mx ${sh}">
+   <div class="mx-reg"><span class="mx-tag ${rc} mx-big">السوق ${esc(j.regime)} · <span class="num">${j.breadth}%</span></span><span class="mx-gauge" role="img" aria-label="مقياس السوق ${j.breadth}"><i style="right:${Math.max(0, Math.min(100, +j.breadth))}%"></i></span><span class="mx-tag n">${esc(j.phase)}</span><span class="k">${j.phase === 'مراقبة' ? 'قبل 11:00 القرار «جهّز» بس' : j.phase === 'إقفال' ? 'بعد 2:00 مفيش دخول جديد · جهّز لبكرة' : j.phase === 'قرار' ? 'مرحلة القرار: ادخل بالشروط' : ''} · من <span class="num">${j.n}</span> سهم سايل · تحديث ${S.mix ? Math.round((Date.now() - S.mix.at) / 1000) : '—'} ث</span></div>
+   <nav class="mx-tiles" aria-label="التيكرز">${it('EGX30', 'EGX30')}${it('EGX70EWI', 'EGX70')}${it('EGX100EWI', 'EGX100')}${secs}${flT}${wT}</nav>${mxDrawer(j, rows)}
+   <section><div class="mx-mini"><b>جاهز دلوقتي</b><span class="k">الضغط على الكارت يفتح سطره في الجدول</span></div><div class="mx-focus">${fo.slice(0, 3).map(mxCard).join('') || '<div class="k">مفيش سهم مكمّل الشروط دلوقتي.</div>'}</div></section>
+   <div class="mx-bar"><b>الفلتر:</b>${[['all', 'الكل', rows.length], ['go', 'ادخل/استنى', cnt(x => ['ادخل', 'استنى رجوع'].includes(x.dec))], ['prep', 'جهّز', cnt(x => x.dec === 'جهّز')], ['warn', 'خلي بالك', W.length], ['mine', '💼 أسهمي', null]].map(([k2, l, n]) => `<button type="button" class="${S.mxf === k2 ? 'on' : ''}" data-mxf="${k2}">${l}${n != null ? ` <small class="num">${n}</small>` : ''}</button>`).join('')}
+    <input type="search" class="mx-q" data-mxq="1" placeholder="سهم أو قطاع" value="${esc(S.mxq || '')}" aria-label="بحث"><span class="mx-sp"></span><b>المؤشرات:</b>${[['base', 'أساسي'], ['trend', 'الاتجاه'], ['liq', 'السيولة'], ['risk', 'المخاطرة'], ['all', 'الكل']].map(([k2, l]) => `<button type="button" class="${S.mxset === k2 ? 'on' : ''}" data-mxset="${k2}">${l}</button>`).join('')}</div>
+   <div class="dk-tbw mx-tw"><table class="dk-tb mx-tb"><thead><tr><th colspan="7" class="mx-g" style="border-color:#E6EAF0">السهم والقرار</th><th colspan="3" class="mx-g mx-t" style="border-color:#5BD08F;color:#5BD08F">الاتجاه</th><th colspan="4" class="mx-g mx-l" style="border-color:#7DB8F5;color:#7DB8F5">السيولة والمشتري</th><th colspan="3" class="mx-g mx-r" style="border-color:#C9A7F5;color:#C9A7F5">المخاطرة والنمط</th><th colspan="4" class="mx-g" style="border-color:#E6EAF0">الصفقة</th></tr>
+    <tr><th>#</th><th>السهم</th><th>السعر</th><th>التغيّر</th><th>قوة الدخول</th><th>الشروط</th><th>القرار</th><th class="mx-t">من VWAP</th><th class="mx-t">15 د</th><th class="mx-t">من القمة</th><th class="mx-l">الحجم ×</th><th class="mx-l">المشتري</th><th class="mx-l">تغيّره 15د</th><th class="mx-l">القيمة م</th><th class="mx-r">قدام القطاع</th><th class="mx-r">نمط الفجوة</th><th class="mx-r">ربح:مخاطرة</th><th>منطقة الدخول</th><th>الوقف</th><th>الهدف 1</th><th class="mx-r">الهدف 2</th></tr></thead>
+    <tbody>${body || '<tr><td colspan="21" class="k">مفيش أسهم بالفلتر ده.</td></tr>'}</tbody></table></div>
+   <div class="mx-row2"><section class="mx-sec"><b>بيحصل دلوقتي · إشارات النهارده</b>${sig.length ? sig.map(x => `<div class="mx-fi" data-mxo="${esc(x[0])}" role="button" tabindex="0"><span class="num k">${hm(x[2] * 1000)}</span> · <span class="mx-tk">${esc(x[0])}</span> ← <span class="mx-tag ${MXD[x[1]] || 'n'}">${esc(x[1])}</span> <span class="num k">${P(x[3])} · درجة ${x[4]}</span></div>`).join('') : '<div class="k">لسه مفيش إشارات. التسجيل بيبدأ 10:00 كل دقيقة.</div>'}</section>
+    <section class="mx-sec"><b>الشروط السبعة (دراسة 73 جلسة)</b><ol class="k">${MXC.map(c => `<li>${esc(c)}</li>`).join('')}</ol><span class="k mx-xs">«ادخل» = أول 6 شروط بعد 11:00 وقبل 2:00 والسعر جوه منطقة الدخول (VWAP لـ VWAP+1%). الشرط 7 تجريبي. الوقف تحت VWAP بـ 1% أو قاع آخر نص ساعة. تحليل بيانات، مش نصيحة استثمارية.</span></section></div></div>`;
+ }
+ document.addEventListener('click', e => {
+  if (!e.target.closest || route().v !== 'desk') return;
+  const g = a => e.target.closest('[' + a + ']'); let b;
+  if ((b = g('data-mxpin'))) { e.stopPropagation(); const t = b.dataset.mxpin; S.mxpins.has(t) ? S.mxpins.delete(t) : S.mxpins.add(t); try { localStorage.setItem('mxpins', JSON.stringify([...S.mxpins])); } catch (er) {} render(); return; }
+  if (g('data-dks')) return;
+  if ((b = g('data-mxtile'))) { S.mxtile = S.mxtile === b.dataset.mxtile ? null : b.dataset.mxtile; render(); return; }
+  if ((b = g('data-mxf'))) { S.mxf = b.dataset.mxf; try { localStorage.setItem('mxf', S.mxf); } catch (er) {} render(); return; }
+  if ((b = g('data-mxset'))) { S.mxset = b.dataset.mxset; try { localStorage.setItem('mxset', S.mxset); } catch (er) {} render(); return; }
+  if ((b = g('data-mxo'))) { const t = b.dataset.mxo; S.mxopen = S.mxopen === t ? null : t; if (S.mxopen && b.closest('.mx-fc,.mx-fi,.mx-drw')) { S.mxf = 'all'; S.mxq = ''; } render(); if (S.mxopen && b.closest('.mx-fc,.mx-fi,.mx-drw')) setTimeout(() => { const r = document.querySelector(`tr[data-mxo="${CSS.escape(t)}"]`); if (r) r.scrollIntoView({block: 'center'}); }, 60); }
+ }, true);
+ document.addEventListener('input', e => { const el = e.target.closest && e.target.closest('[data-mxq]'); if (!el) return; clearTimeout(S._mxi); S._mxi = setTimeout(() => { S.mxq = el.value.trim(); render(); const n = document.querySelector('[data-mxq]'); if (n && document.activeElement !== n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (er) {} } }, 250); });
  function desk(m) {
   try { bsLoad(); } catch (e) {}
+  try { mixLoad(); } catch (e) {}
   load(); loadDeep(inSession() ? 60000 : 600000); loadLvl(inSession() ? 30000 : 600000);
   if (!S.dtick) S.dtick = setInterval(() => { try { if (route().v === 'desk' && document.visibilityState !== 'hidden') render(); } catch (e) {} }, 1000 * 5);
   if (!D0()) return dTop() + '<div class="k dk-emp">بيحمّل الصفقات والفرص…</div>';
@@ -5324,7 +5447,8 @@ ${JSON.stringify(ctx)}`;
   else if (l === 'p4') body = `<div class="dk-g p4">${pn('🗺 خريطة السيولة: القطاعات وأسهمها', 'المساحة = قيمة التداول · اللون = حالة القطاع · 👑 القائد', dSecMap(), 'map')}<div class="dk-col">${pn('🔄 السيولة رايحة فين؟', 'آخر 30 دقيقة', dRiver() + (SD() ? readNow(SD()) : ''))}</div><div class="dk-col">${pn('👑 القادة والطابور', 'لو فاتك سهم خد اللي بعده', dLeaders(3))}${pn('💼 صفقاتي', '', dMine(true))}</div>${pn('⏱ حالة كل قطاع على مدار اليوم', '■ هادي ■ بداية ■ مؤكد ■ تشبّع ■ خروج', dGantt(), 'gt')}</div>`;
   else if (l === 'scan') { let A = [], H2 = held(), D2 = SD(); try { A = scRows(); } catch (e) {} body = `<div class="lv-dk"><div class="lv-two">${dOppTbl(A, H2, D2)}${dPrepTbl(A, H2, D2)}</div>${pn('🔎 الجدول اللايف — كل الأسهم', 'رتّب بأي عمود · فلتر من الصف اللي تحت العناوين · دوس على سهم يفتح تحليله', dScan(), 'scan')}</div>`; }
   else if (l === 'pg') body = `<div class="lv-dk">${livePage(m, true)}</div>`;
-  else body = `<div class="lv-dk">${monView(m, true)}</div>`;
+  else if (l === 'mon') body = `<div class="lv-dk">${monView(m, true)}</div>`;
+  else body = `<div class="lv-dk">${MXED ? monView(m, true) : mixView(m)}</div>`;
   const hasPanel = false;
   const drawer = !hasPanel && S.ddrw && st ? `<div class="dk-dw" role="dialog" aria-label="تحليل ${esc(st)}"><button type="button" class="dk-dwx" data-dkx="1" aria-label="اقفل">✕</button>${dStock(st)}</div>` : '';
   try { sectors(); newsStrip(); } catch (e) {}
@@ -5359,7 +5483,49 @@ ${JSON.stringify(ctx)}`;
  document.addEventListener('input', e => { const el = e.target.closest && e.target.closest('input[data-dkcf]'); if (!el || route().v !== 'desk') return; clearTimeout(S._dkIn); S._dkIn = setTimeout(() => { dkColSet(el); try { render(); } catch (er) {} const n = document.querySelector('input[data-dkcf="t"]'); if (n && document.activeElement !== n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (er) {} } }, 250); });
  document.addEventListener('keydown', e => { if (route().v !== 'desk' || /input|textarea/i.test((e.target.tagName || ''))) return; const k = '12345'.indexOf(e.key); if (k >= 0 && k < DKL.length && !e.ctrlKey && !e.metaKey) { S.dl = DKL[k][0]; try { localStorage.setItem('dkl', S.dl); } catch (er) {} render(); } if (e.key === 'Escape' && S.ddrw && !S.sheet) { if (hst().dkdrw) history.back(); else { S.ddrw = false; render(); } } });
 
- document.head.insertAdjacentHTML('beforeend', `<style id="dk-css">
+ document.head.insertAdjacentHTML('beforeend', `<style id="dk-css">.mx{display:flex;flex-direction:column;gap:12px;min-width:0}
+.mx .k{color:var(--mut,#9AA4B2)}.mx .mx-xs{font-size:11.5px}.mx .gold{color:var(--gold,#F2B25C)}
+.mx-tk{font-weight:700;font-family:ui-monospace,'IBM Plex Mono',monospace}
+.mx-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.mx-tag.g{background:#123524;color:#5BD08F}.mx-tag.o{background:#3A2A12;color:#F2B25C}.mx-tag.r{background:#3B1718;color:#F27C79}.mx-tag.b{background:#122A40;color:#7DB8F5}.mx-tag.n{background:#222932;color:#C3CBD6}
+.mx-big{font-size:14px;padding:4px 12px}
+.mx-reg{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.mx-gauge{position:relative;width:120px;height:8px;border-radius:4px;background:linear-gradient(to left,#3B1718 0 35%,#2A2F38 35% 60%,#123524 60% 100%)}
+.mx-gauge i{position:absolute;top:-4px;width:3px;height:16px;background:#E6EAF0;border-radius:2px}
+.mx-tiles{display:flex;flex-wrap:wrap;gap:6px}
+.mx-tile{display:flex;flex-direction:column;gap:3px;flex:1 1 150px;min-width:0;padding:8px 10px;border-radius:9px;background:#11161D;border:1px solid #212833;color:inherit;font:inherit;font-size:12.5px;text-align:right;cursor:pointer}
+.mx-tile.on{border-color:#7DB8F5;box-shadow:0 0 0 1px #7DB8F5 inset}
+.mx-mini{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px}
+.mx-drw{background:#0E1823;border:1px solid #2C5A86;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mx-p{margin:0;font-size:13px;line-height:1.7}
+.mx-focus{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.mx-fc{display:flex;flex-direction:column;gap:6px;flex:1 1 250px;min-width:0;padding:11px 13px;border-radius:12px;background:#0F151C;border:1px solid #212833;color:inherit;font:inherit;text-align:right;cursor:pointer}
+.mx-fc.hot{border-color:#2F7D52;box-shadow:0 0 0 1px #2F7D52 inset;background:#0E1A14}
+.mx-fh{display:flex;align-items:center;gap:10px;width:100%}.mx-fn{display:flex;flex-direction:column}.mx-fn .mx-tk{font-size:17px}.mx-fh .mx-tag{margin-inline-start:auto}
+.mx-ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.mx-ring span{background:#0F151C;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.mx-zone{position:relative;height:8px;border-radius:4px;background:#1F2630;margin:4px 0}
+.mx-zone b{position:absolute;top:0;bottom:0;background:#2F7D52;border-radius:4px}.mx-zone i{position:absolute;top:-4px;width:3px;height:16px;background:#E6EAF0;border-radius:2px}
+.mx-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px}
+.mx-bar button{min-height:34px;padding:0 11px;border-radius:8px;border:1px solid #2E3744;background:#161C24;color:inherit;font:inherit;cursor:pointer}
+.mx-bar button.on{background:#E6EAF0;color:#0B0F14;border-color:#E6EAF0;font-weight:700}
+.mx-q{min-height:34px;padding:0 10px;border-radius:8px;border:1px solid #2E3744;background:#0B0F14;color:inherit;font:inherit;width:140px}
+.mx-sp{flex:1}
+.mx-tb td,.mx-tb th{white-space:nowrap}
+.mx-tb th.mx-g{font-weight:700;border-bottom:2px solid}
+.mx-rw{cursor:pointer}.mx-rw.hl td{background:#0E1A14}.mx-rw.pin td{background:#15142A}
+.mx-dots{display:inline-flex;gap:3px}.mx-dots i{width:8px;height:8px;border-radius:50%;background:#2E3744;display:block}.mx-dots i.y{background:#5BD08F}.mx-dots i.u{background:transparent;border:1px dashed #56606E}
+.mx-det td{background:#0C1219!important;padding:0!important;white-space:normal}
+.mx-dg{display:flex;flex-wrap:wrap;gap:14px;padding:12px}.mx-dc{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:13px}.mx-act{flex:0 1 220px}
+.mx-ck{display:flex;gap:8px;align-items:flex-start;font-size:12.5px}.mx-ck b{width:16px;flex:none;text-align:center}
+.mx-ht .mx-t,.mx-hm .mx-m,.mx-hl .mx-l,.mx-hr .mx-r{display:none}
+.mx-row2{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+.mx-sec{flex:1 1 340px;min-width:0;background:#11161D;border:1px solid #212833;border-radius:10px;padding:12px;font-size:12.5px}
+.mx-sec ol{margin:6px 0;padding-inline-start:18px;line-height:1.85}
+.mx-fi{padding:5px 0;border-bottom:1px solid #1A2028;cursor:pointer}
+@media (max-width:700px){.mx-tiles{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.mx-tile{flex:0 0 150px}}
+.sh-mix{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:12.5px}
+
 body.deskmode header.top,body.deskmode .rnav,body.deskmode .backbar{display:none!important}
 body.deskmode main#app{max-width:none;padding:0;gap:0}
 .dk{--dkh:calc(100vh - 88px);display:flex;flex-direction:column;background:#070B14;min-height:100vh;font-size:12.5px}
@@ -5705,9 +5871,9 @@ mark.ai-k{background:none;font-weight:800;padding:0 1px}mark.ai-k.up{color:var(-
 @media (prefers-reduced-motion:reduce){.sx-hero,.sx-arw,.sx-dash,.sx-sk.first{animation:none!important}}
 </style>`);
  const bsStock = t => { try { bsLoad(); const r = bsOf(t); return r ? `<section class="card bs-sc"><h3>🎯 ابيع فين واشتري فين</h3>${bsCard(r, {sellFirst: held().has(t)})}</section>` : ''; } catch (e) { return ''; } };
- return {view, desk, tradeTab, tradeCtx, findTrade, reviewPost, coreWeekly, health, badge, bsStock, bsLoad, openSheet: k => { sheetOpen(k); render(); }};
+ return {view, desk, mixLoad, tradeTab, tradeCtx, findTrade, reviewPost, coreWeekly, health, badge, bsStock, bsLoad, openSheet: k => { sheetOpen(k); render(); }};
 })();
-function route() { const h = (location.hash || '').slice(1); if (h === 'home' || (h === '' && isEd())) return {v: 'home'}; if (h === 'now' || h === '') return {v: nowPhase(), now: true}; if (h.startsWith('stock-')) return {v: 'stock', t: h.slice(6).toUpperCase()}; if (h.startsWith('t2-')) { const T = h.slice(3).toUpperCase(); ui.stab = 'dec'; try { history.replaceState(null, '', '#stock-' + T); } catch (e) {} return {v: 'stock', t: T}; } if (['map', 'trade2', 'trade', 'desk', 'tradeold', 'pf', 'today', 'pre', 'post', 'stock', 'market', 'scan', 'health', 'watch', 'settings', 'news', 'quality'].includes(h)) return {v: h}; return {v: 'market'}; }
+function route() { const h = (location.hash || '').slice(1); if (h === 'home' || (h === '' && isEd())) return {v: 'home'}; if (h === '') return {v: 'desk'}; if (h === 'now') return {v: nowPhase(), now: true}; if (h.startsWith('stock-')) return {v: 'stock', t: h.slice(6).toUpperCase()}; if (h.startsWith('t2-')) { const T = h.slice(3).toUpperCase(); ui.stab = 'dec'; try { history.replaceState(null, '', '#stock-' + T); } catch (e) {} return {v: 'stock', t: T}; } if (['map', 'trade2', 'trade', 'desk', 'tradeold', 'pf', 'today', 'pre', 'post', 'stock', 'market', 'scan', 'health', 'watch', 'settings', 'news', 'quality'].includes(h)) return {v: h}; return {v: 'market'}; }
 const NAV = {stack: [], y: 0, back: false, seq: 0, cur: 0, fwd: 0};
 try { history.replaceState(Object.assign({}, history.state || {}, {nav: 0}), ''); } catch (e) {}
 window.addEventListener('scroll', () => { NAV.y = window.scrollY; }, {passive: true});
@@ -5753,7 +5919,7 @@ async function render() {
  if (liveWin()) loadLive();
  if (r.v === 'stock') { const tc = cache.tape; if (!tc || Date.now() - tc.at > 30000) loadKey('tape', 'select public.soffar_app_tape_events(0, 400) as j', 30000).then(() => route().v === 'stock' && render()).catch(() => { cache.tape = {d: null, at: Date.now()}; }); }
  document.querySelectorAll('#rtabs a').forEach(a => a.classList.toggle('on', a.dataset.sec === RSEC[r.v]));
- if (r.v === 'stock' && r.t) { ui.stock = r.t; $('#tab-stock').setAttribute('href', '#stock-' + r.t); }
+ if (r.v === 'stock' && r.t) { ui.stock = r.t; $('#tab-stock').setAttribute('href', '#stock-' + r.t); try { TV.mixLoad(); } catch (e) {} }
  let html = err ? `<div class="banner info">آخر تحديث فشل، والأرقام من ${hm(D.at)}. هحاول تاني لوحدي.</div>` : '';
  if (RSEC[r.v] && r.v !== 'stock') html += subNav(r.v);
  if (!['home', 'desk', 'stock', 't2s', 'quality', 'health', 'settings', 'trade', 'trade2'].includes(r.v)) html += nowStrip(m);
@@ -6107,9 +6273,10 @@ setInterval(async () => {
  AIQ.busy = true;
  try {
   const j = await sql('select public.soffar_ai_q_next() as j'); if (!j || !j.t) return;
-  await deepAI(j.t, true, j.q || null, true);
-  const d = ui.dai[j.t] || {}, esc2 = s => String(s).replace(/'/g, "''");
-  await sql(`select public.soffar_ai_q_done(${+j.id}, ${d.res ? `'${esc2(JSON.stringify(d.res))}'::jsonb` : 'null'}, ${d.err ? `'${esc2(d.err)}'` : 'null'}) as j`);
+  // v157: always close the question, even when the analysis fails, so the asker never waits forever
+  let ex = null; try { await deepAI(j.t, true, j.q || null, true); } catch (e) { ex = (e && e.message) || 'فشل التحليل'; }
+  const d = ui.dai[j.t] || {}, esc2 = s => String(s).replace(/'/g, "''"), er = d.res ? null : (d.err || ex || 'التحليل ما رجعش نتيجة');
+  await sql(`select public.soffar_ai_q_done(${+j.id}, ${d.res ? `'${esc2(JSON.stringify(d.res))}'::jsonb` : 'null'}, ${er ? `'${esc2(er)}'` : 'null'}) as j`);
  } catch (e) {} finally { AIQ.busy = false; }
 }, 15000);
 // ---- charts ----
